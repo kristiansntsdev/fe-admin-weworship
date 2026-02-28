@@ -1,0 +1,32 @@
+import { type NextRequest, NextResponse } from "next/server";
+
+const AUTH_COOKIE = "session_token";
+
+export function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  const sessionToken = req.cookies.get(AUTH_COOKIE)?.value;
+
+  const isDashboard = pathname.startsWith("/dashboard");
+  // /auth/callback must be reachable regardless of session state —
+  // it is the landing page where Go drops the JWT after OAuth.
+  const isAuthCallback = pathname.startsWith("/auth/callback");
+  const isAuth = pathname.startsWith("/auth") && !isAuthCallback;
+
+  // Protect dashboard routes — redirect to login if no session
+  if (isDashboard && !sessionToken) {
+    const loginUrl = new URL("/auth/v2/login", req.url);
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Redirect authenticated users away from auth pages to dashboard
+  if (isAuth && sessionToken) {
+    return NextResponse.redirect(new URL("/dashboard/default", req.url));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api).*)"],
+};
