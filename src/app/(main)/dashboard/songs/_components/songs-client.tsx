@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -7,10 +8,10 @@ import { Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import type { Song } from "../page";
 import { DeleteSongDialog } from "./delete-song-dialog";
-import { SongDialog } from "./song-dialog";
 import { SongsTable } from "./songs-table";
 
 interface Props {
@@ -19,51 +20,84 @@ interface Props {
   limit: number;
   currentPage: number;
   currentSearch: string;
+  currentHasLink: string;
+  currentChordPro: string;
 }
 
-export function SongsClient({ songs, total, limit, currentPage, currentSearch }: Props) {
+export function SongsClient({ songs, total, limit, currentPage, currentSearch, currentHasLink, currentChordPro }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState(currentSearch);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editSong, setEditSong] = useState<Song | null>(null);
   const [deleteSong, setDeleteSong] = useState<Song | null>(null);
+
+  function buildParams(overrides: Record<string, string>) {
+    const p = new URLSearchParams();
+    const merged = { search, has_link: currentHasLink, chordpro: currentChordPro, page: "1", ...overrides };
+    if (merged.search) p.set("search", merged.search);
+    if (merged.has_link && merged.has_link !== "all") p.set("has_link", merged.has_link);
+    if (merged.chordpro && merged.chordpro !== "all") p.set("chordpro", merged.chordpro);
+    if (merged.page !== "1") p.set("page", merged.page);
+    return p.toString().replace(/\+/g, "%20");
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    params.set("page", "1");
-    router.push(`/dashboard/songs?${params}`);
+    router.push(`/dashboard/songs?${buildParams({ search, page: "1" })}`);
   }
 
   function handlePage(page: number) {
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    params.set("page", String(page));
-    router.push(`/dashboard/songs?${params}`);
-  }
-
-  function onMutated() {
-    router.refresh();
+    router.push(`/dashboard/songs?${buildParams({ page: String(page) })}`);
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <Input
-            placeholder="Search songs..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-64"
-          />
-          <Button type="submit" variant="outline" size="icon">
-            <Search className="size-4" />
-          </Button>
-        </form>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" />
-          Add Song
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <Input
+              placeholder="Search songs..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-52"
+            />
+            <Button type="submit" variant="outline" size="icon">
+              <Search className="size-4" />
+            </Button>
+          </form>
+
+          <Select
+            value={currentHasLink}
+            onValueChange={(v) => router.push(`/dashboard/songs?${buildParams({ has_link: v, page: "1" })}`)}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All links</SelectItem>
+              <SelectItem value="true">Has external link</SelectItem>
+              <SelectItem value="false">No external link</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={currentChordPro}
+            onValueChange={(v) => router.push(`/dashboard/songs?${buildParams({ chordpro: v, page: "1" })}`)}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All formats</SelectItem>
+              <SelectItem value="true">ChordPro ready</SelectItem>
+              <SelectItem value="false">Not converted</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button asChild>
+          <Link href="/dashboard/songs/new">
+            <Plus className="size-4" />
+            Add Song
+          </Link>
         </Button>
       </div>
 
@@ -73,29 +107,17 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch }:
         page={currentPage}
         limit={limit}
         onPageChange={handlePage}
-        onEdit={setEditSong}
+        onEdit={(song) => router.push(`/dashboard/songs/${song.id}/edit`)}
         onDelete={setDeleteSong}
-      />
-
-      <SongDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onSuccess={onMutated}
-      />
-
-      <SongDialog
-        open={!!editSong}
-        onOpenChange={(open) => !open && setEditSong(null)}
-        song={editSong ?? undefined}
-        onSuccess={onMutated}
       />
 
       <DeleteSongDialog
         open={!!deleteSong}
         onOpenChange={(open) => !open && setDeleteSong(null)}
         song={deleteSong}
-        onSuccess={onMutated}
+        onSuccess={() => router.refresh()}
       />
     </div>
   );
 }
+

@@ -20,7 +20,7 @@ export function DeleteSongDialog({ open, onOpenChange, song, onSuccess }: Props)
     if (!song) return;
     setLoading(true);
     try {
-      await fetch(`/api/admin/songs/${song.id}`, { method: "DELETE", credentials: "include" });
+      await fetch(`/api/admin/songs/${song.id}`, { method: "DELETE" });
       onOpenChange(false);
       onSuccess();
     } finally {

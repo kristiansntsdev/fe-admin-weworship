@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Edit, MoreHorizontal, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Edit, Link2, MoreHorizontal, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,25 @@ interface Props {
   onDelete: (song: Song) => void;
 }
 
+function hasExternalLink(song: Song): boolean {
+  const raw = song.external_links;
+  if (!raw) return false;
+  // Go sql.NullString serializes as { String: "...", Valid: true }
+  const str = typeof raw === "object" && raw !== null && "String" in raw
+    ? (raw as { String: string; Valid: boolean }).Valid ? (raw as { String: string }).String : ""
+    : typeof raw === "string" ? raw : JSON.stringify(raw);
+  if (!str) return false;
+  try {
+    const parsed = JSON.parse(str);
+    return typeof parsed === "object" && parsed !== null && Object.keys(parsed).length > 0;
+  } catch { return false; }
+}
+
+function isChordPro(song: Song): boolean {
+  const lyrics = song.lyrics_and_chords ?? "";
+  return lyrics.includes("[") && !lyrics.includes("<span");
+}
+
 export function SongsTable({ songs = [], total, page, limit, onPageChange, onEdit, onDelete }: Props) {
   const totalPages = Math.ceil(total / limit);
 
@@ -29,14 +48,15 @@ export function SongsTable({ songs = [], total, page, limit, onPageChange, onEdi
               <TableHead>Title</TableHead>
               <TableHead>Artist</TableHead>
               <TableHead>Key</TableHead>
-              <TableHead>DMCA</TableHead>
+              <TableHead>ChordPro</TableHead>
+              <TableHead>Links</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {songs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                   No songs found.
                 </TableCell>
               </TableRow>
@@ -47,11 +67,14 @@ export function SongsTable({ songs = [], total, page, limit, onPageChange, onEdi
                   <TableCell className="text-muted-foreground">{song.artist}</TableCell>
                   <TableCell>{song.base_chord || "—"}</TableCell>
                   <TableCell>
-                    {song.dmca_takedown ? (
-                      <Badge variant="destructive">Taken down</Badge>
-                    ) : (
-                      <Badge variant="outline">OK</Badge>
-                    )}
+                    {isChordPro(song)
+                      ? <Badge variant="outline" className="text-green-600 border-green-600">Ready</Badge>
+                      : <Badge variant="outline" className="text-orange-500 border-orange-500">Pending</Badge>}
+                  </TableCell>
+                  <TableCell>
+                    {hasExternalLink(song)
+                      ? <Link2 className="size-4 text-muted-foreground" />
+                      : <span className="text-muted-foreground/40 text-xs">—</span>}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
