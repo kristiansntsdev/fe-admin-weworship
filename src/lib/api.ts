@@ -2,12 +2,10 @@ import { cookies } from "next/headers";
 
 const AUTH_COOKIE = "session_token";
 
-// Determine the internal API base URL.
-// On Vercel, VERCEL_URL is set automatically.
-// Locally (next dev), the Next.js rewrite in next.config.mjs forwards /api/* to Go.
+// Server-side API base URL — must point directly to the Go backend.
+// NEXT_PUBLIC_GO_URL should be set to https://be-weworship.vercel.app on Vercel.
 function apiBase(): string {
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return process.env.GO_DEV_URL ?? "http://localhost:3001";
+  return process.env.NEXT_PUBLIC_GO_URL ?? process.env.GO_DEV_URL ?? "http://localhost:3001";
 }
 
 export interface ApiError {
