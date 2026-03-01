@@ -13,6 +13,7 @@ import { register } from "@/server/auth-actions";
 
 const FormSchema = z
   .object({
+    name: z.string().min(2, { message: "Name must be at least 2 characters." }),
     email: z.string().email({ message: "Please enter a valid email address." }),
     password: z.string().min(6, { message: "Password must be at least 6 characters." }),
     confirmPassword: z.string().min(6, { message: "Confirm Password must be at least 6 characters." }),
@@ -28,6 +29,7 @@ export function RegisterForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -36,7 +38,7 @@ export function RegisterForm() {
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     setServerError(null);
-    const result = await register(data.email, data.password);
+    const result = await register(data.name, data.email, data.password);
     if (result?.error) {
       setServerError(result.error);
     }
@@ -45,6 +47,19 @@ export function RegisterForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input id="name" type="text" placeholder="Your name" autoComplete="name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="email"

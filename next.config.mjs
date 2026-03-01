@@ -17,7 +17,7 @@ const nextConfig = {
     // On Vercel, @vercel/go handles /api/* directly.
     // This rewrite is only active during local `next dev` (not vercel dev).
     if (process.env.NODE_ENV !== "development") return [];
-    const goApiUrl = process.env.GO_DEV_URL ?? "http://localhost:8080";
+    const goApiUrl = process.env.GO_DEV_URL ?? "http://localhost:3001";
     return [
       {
         source: "/api/:path*",

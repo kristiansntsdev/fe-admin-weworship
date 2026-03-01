@@ -8,7 +8,7 @@ const AUTH_COOKIE = "session_token";
 // Locally, vercel dev serves both Next.js and Go on the same port.
 const API_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+  : process.env.GO_DEV_URL ?? "http://localhost:3001";
 
 export async function login(
   email: string,
@@ -27,7 +27,7 @@ export async function login(
     return { error: "Could not reach the server. Please try again." };
   }
 
-  const body = await res.json();
+  const body = await res.json().catch(() => ({ message: res.statusText }));
 
   if (!res.ok) {
     return { error: body.message ?? "Invalid email or password." };
@@ -50,10 +50,39 @@ export async function login(
   redirect(redirectTo);
 }
 
-export async function register(email: string, _password: string): Promise<{ error: string }> {
-  // Registration via email/password requires a backend endpoint — not yet implemented.
-  // For now, direct users to use Google sign-in or contact an admin.
-  return { error: "Email registration is not yet available. Please sign in with Google." };
+export async function register(name: string, email: string, password: string): Promise<{ error: string } | void> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
+  } catch {
+    return { error: "Could not reach the server. Please try again." };
+  }
+
+  const body = await res.json().catch(() => ({ message: res.statusText }));
+
+  if (!res.ok) {
+    return { error: body.message ?? "Registration failed. Please try again." };
+  }
+
+  const token: string | undefined = body.data?.token;
+  if (!token) {
+    return { error: "Registration failed. Please try again." };
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set(AUTH_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 30,
+    path: "/",
+  });
+
+  redirect("/dashboard/default");
 }
 
 export async function logout(): Promise<void> {
