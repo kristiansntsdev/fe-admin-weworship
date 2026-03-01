@@ -2,6 +2,21 @@ import { type NextRequest, NextResponse } from "next/server";
 
 const AUTH_COOKIE = "session_token";
 
+// Routes that only admins can access
+const ADMIN_ONLY_PATHS = ["/dashboard/analytics", "/dashboard/users"];
+
+function decodeRole(token: string): "user" | "admin" | "maintenancer" | null {
+  try {
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(atob(base64));
+    if (payload.role === "admin") return "admin";
+    if (payload.role === "maintenancer") return "maintenancer";
+    return "user";
+  } catch {
+    return null;
+  }
+}
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const sessionToken = req.cookies.get(AUTH_COOKIE)?.value;
@@ -17,6 +32,21 @@ export function proxy(req: NextRequest) {
     const loginUrl = new URL("/auth/v2/login", req.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Role-based access control for dashboard
+  if (isDashboard && sessionToken) {
+    const role = decodeRole(sessionToken);
+
+    // Invalid token or plain user → unauthorized
+    if (!role || role === "user") {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
+
+    // Maintenancer cannot access admin-only paths
+    if (role === "maintenancer" && ADMIN_ONLY_PATHS.some((p) => pathname.startsWith(p))) {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
   }
 
   // Redirect authenticated users away from auth pages to dashboard

@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { api } from "@/lib/api";
+import { getSessionUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -71,6 +73,9 @@ function StatCard({ title, value, subtitle }: { title: string; value: string | n
 }
 
 export default async function AnalyticsPage() {
+  const sessionUser = await getSessionUser();
+  if (sessionUser?.role !== "admin") redirect("/unauthorized");
+
   const { topSongs, topSearches, performance, sessions, userStats } = await fetchAnalytics();
 
   const totalSessions = sessions.reduce((sum, s) => sum + s.count, 0);

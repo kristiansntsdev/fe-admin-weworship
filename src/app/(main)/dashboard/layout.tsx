@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { AppSidebar } from "@/app/(main)/dashboard/_components/sidebar/app-sidebar";
@@ -23,13 +24,14 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
     getSessionUser(),
   ]);
 
-  const user = sessionUser
-    ? { name: sessionUser.name, email: sessionUser.email, avatar: "" }
-    : { name: "Admin", email: "", avatar: "" };
+  if (!sessionUser || sessionUser.role === "user") redirect("/unauthorized");
+
+  const user = { name: sessionUser.name, email: sessionUser.email, avatar: "" };
+  const role = sessionUser.role;
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar variant={variant} collapsible={collapsible} user={user} />
+      <AppSidebar variant={variant} collapsible={collapsible} user={user} role={role} />
       <SidebarInset
         className={cn(
           "[html[data-content-layout=centered]_&]:mx-auto! [html[data-content-layout=centered]_&]:max-w-screen-2xl!",

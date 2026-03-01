@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { api } from "@/lib/api";
+import { getSessionUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -23,6 +25,9 @@ async function fetchUsers(): Promise<User[]> {
 }
 
 export default async function UsersPage() {
+  const sessionUser = await getSessionUser();
+  if (sessionUser?.role !== "admin") redirect("/unauthorized");
+
   const users = await fetchUsers();
 
   return (

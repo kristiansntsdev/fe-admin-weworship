@@ -14,6 +14,7 @@ export interface NavSubItem {
   comingSoon?: boolean;
   newTab?: boolean;
   isNew?: boolean;
+  roles?: Array<"admin" | "maintenancer">;
 }
 
 export interface NavMainItem {
@@ -24,6 +25,7 @@ export interface NavMainItem {
   comingSoon?: boolean;
   newTab?: boolean;
   isNew?: boolean;
+  roles?: Array<"admin" | "maintenancer">;
 }
 
 export interface NavGroup {
@@ -46,6 +48,7 @@ export const sidebarItems: NavGroup[] = [
         title: "Analytics",
         url: "/dashboard/analytics",
         icon: ChartBar,
+        roles: ["admin"],
       },
     ],
   },
@@ -62,6 +65,7 @@ export const sidebarItems: NavGroup[] = [
         title: "Users",
         url: "/dashboard/users",
         icon: Users,
+        roles: ["admin"],
       },
     ],
   },
