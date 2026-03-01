@@ -48,7 +48,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
             <div className="flex items-center gap-1 lg:gap-2">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
-              <SearchDialog />
+              <SearchDialog role={role} />
             </div>
             <div className="flex items-center gap-2">
               <LayoutControls />
