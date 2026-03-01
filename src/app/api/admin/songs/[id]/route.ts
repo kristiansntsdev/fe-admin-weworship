@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 const AUTH_COOKIE = "session_token";
-const BE = process.env.GO_DEV_URL ?? "http://localhost:3001";
+const BE = process.env.NEXT_PUBLIC_GO_URL ?? process.env.GO_DEV_URL ?? "http://localhost:3001";
 
 async function proxy(req: NextRequest, method: string, id: string) {
   const cookieStore = await cookies();
