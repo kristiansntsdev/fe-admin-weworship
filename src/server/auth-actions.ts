@@ -4,11 +4,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 const AUTH_COOKIE = "session_token";
-// VERCEL_URL is automatically set by Vercel on every deployment.
-// Locally, vercel dev serves both Next.js and Go on the same port.
-const API_URL = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : process.env.GO_DEV_URL ?? "http://localhost:3001";
+// Server actions call the BE directly (bypasses Next.js rewrites which are browser-only).
+const API_URL = process.env.NEXT_PUBLIC_GO_URL ?? process.env.GO_DEV_URL ?? "http://localhost:3001";
 
 export async function login(
   email: string,
