@@ -1,5 +1,6 @@
 import {
   ChartBar,
+  History,
   LayoutDashboard,
   type LucideIcon,
   Music,
@@ -65,6 +66,12 @@ export const sidebarItems: NavGroup[] = [
         title: "Users",
         url: "/dashboard/users",
         icon: Users,
+        roles: ["admin"],
+      },
+      {
+        title: "Audit Log",
+        url: "/dashboard/audit-logs",
+        icon: History,
         roles: ["admin"],
       },
     ],
