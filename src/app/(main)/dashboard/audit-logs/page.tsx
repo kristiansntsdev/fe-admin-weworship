@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { api } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AuditLogRow } from "./_components/audit-log-row";
 
 export const dynamic = "force-dynamic";
 
@@ -35,35 +35,6 @@ async function fetchAuditLogs(page: number, action: string, entityType: string):
   } catch {
     return { data: [], pagination: { page, limit: 30, total: 0, total_pages: 1 } };
   }
-}
-
-const ACTION_COLORS: Record<string, "default" | "destructive" | "secondary" | "outline"> = {
-  create: "default",
-  update: "secondary",
-  delete: "destructive",
-};
-
-function formatChanges(raw: string | null): string {
-  if (!raw) return "—";
-  try {
-    const obj = JSON.parse(raw);
-    return Object.entries(obj)
-      .map(([k, v]) => {
-        if (typeof v === "object" && v !== null && "from" in v && "to" in v) {
-          const from = String((v as any).from).slice(0, 40);
-          const to = String((v as any).to).slice(0, 40);
-          return `${k}: "${from}" → "${to}"`;
-        }
-        return `${k}: ${String(v).slice(0, 60)}`;
-      })
-      .join(" · ");
-  } catch {
-    return raw.slice(0, 100);
-  }
-}
-
-function formatDate(ts: string): string {
-  return new Date(ts).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
 }
 
 export default async function AuditLogsPage({
@@ -130,23 +101,7 @@ export default async function AuditLogsPage({
               </TableRow>
             )}
             {data.map((log) => (
-              <TableRow key={log.id}>
-                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(log.createdAt)}</TableCell>
-                <TableCell>
-                  <div className="text-sm font-medium">{log.user_name}</div>
-                  <div className="text-xs text-muted-foreground">{log.user_email}</div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={ACTION_COLORS[log.action] ?? "outline"}>{log.action}</Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">{log.entity_name ?? "—"}</div>
-                  <div className="text-xs text-muted-foreground capitalize">{log.entity_type}{log.entity_id ? ` #${log.entity_id}` : ""}</div>
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={log.changes ?? ""}>
-                  {formatChanges(log.changes)}
-                </TableCell>
-              </TableRow>
+              <AuditLogRow key={log.id} log={log} />
             ))}
           </TableBody>
         </Table>
