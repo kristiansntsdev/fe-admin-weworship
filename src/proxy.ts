@@ -5,12 +5,12 @@ const AUTH_COOKIE = "session_token";
 // Routes that only admins can access
 const ADMIN_ONLY_PATHS = ["/dashboard/analytics", "/dashboard/users"];
 
-function decodeRole(token: string): "user" | "admin" | "maintenancer" | null {
+function decodeRole(token: string): "user" | "admin" | "maintainer" | null {
   try {
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
     const payload = JSON.parse(atob(base64));
     if (payload.role === "admin") return "admin";
-    if (payload.role === "maintenancer") return "maintenancer";
+    if (payload.role === "maintainer") return "maintainer";
     return "user";
   } catch {
     return null;
@@ -44,7 +44,7 @@ export function proxy(req: NextRequest) {
     }
 
     // Maintenancer cannot access admin-only paths
-    if (role === "maintenancer" && ADMIN_ONLY_PATHS.some((p) => pathname.startsWith(p))) {
+    if (role === "maintainer" && ADMIN_ONLY_PATHS.some((p) => pathname.startsWith(p))) {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
   }

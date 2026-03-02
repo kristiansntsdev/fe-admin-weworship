@@ -6,7 +6,7 @@ export interface SessionUser {
   userId: number;
   name: string;
   email: string;
-  role: "user" | "admin" | "maintenancer";
+  role: "user" | "admin" | "maintainer";
 }
 
 // Decode a JWT payload without verifying the signature.
@@ -24,7 +24,7 @@ function decodeJwtPayload(token: string): SessionUser | null {
       userId: payload.userId,
       name: payload.name ?? payload.email,
       email: payload.email,
-      role: payload.role === "admin" ? "admin" : payload.role === "maintenancer" ? "maintenancer" : "user",
+      role: payload.role === "admin" ? "admin" : payload.role === "maintainer" ? "maintainer" : "user",
     };
   } catch {
     return null;

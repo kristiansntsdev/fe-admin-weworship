@@ -15,7 +15,7 @@ export interface NavSubItem {
   comingSoon?: boolean;
   newTab?: boolean;
   isNew?: boolean;
-  roles?: Array<"admin" | "maintenancer">;
+  roles?: Array<"admin" | "maintainer">;
 }
 
 export interface NavMainItem {
@@ -26,7 +26,7 @@ export interface NavMainItem {
   comingSoon?: boolean;
   newTab?: boolean;
   isNew?: boolean;
-  roles?: Array<"admin" | "maintenancer">;
+  roles?: Array<"admin" | "maintainer">;
 }
 
 export interface NavGroup {

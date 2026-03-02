@@ -42,7 +42,7 @@ export function AppSidebar({ user, role, ...props }: AppSidebarProps) {
   // Filter nav items based on role
   const filteredItems = sidebarItems.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !item.roles || item.roles.includes(role as "admin" | "maintenancer")),
+    items: group.items.filter((item) => !item.roles || item.roles.includes(role as "admin" | "maintainer")),
   })).filter((group) => group.items.length > 0);
 
   return (
