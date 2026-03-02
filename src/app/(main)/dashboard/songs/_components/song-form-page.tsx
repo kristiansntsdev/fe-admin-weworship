@@ -117,6 +117,7 @@ export function SongFormPage({ song }: Props) {
   );
   const [artistInput, setArtistInput] = useState("");
   const [baseChord, setBaseChord] = useState(song?.base_chord ?? "");
+  const [bpm, setBpm] = useState<string>(song?.bpm != null ? String(song.bpm) : "");
   const [chordPro, setChordPro] = useState(song?.lyrics_and_chords ?? "");
   const [links, setLinks] = useState<{ provider: string; url: string }[]>(() => {
     try {
@@ -167,6 +168,7 @@ export function SongFormPage({ song }: Props) {
       title: title.trim(),
       artist: artists.join(", "),
       base_chord: baseChord,
+      bpm: bpm !== "" ? Number(bpm) : null,
       lyrics_and_chords: chordPro,
       external_links: JSON.stringify(
         Object.fromEntries(links.filter((l) => l.provider.trim() && l.url.trim()).map((l) => [l.provider.trim(), l.url.trim()]))
@@ -238,7 +240,7 @@ export function SongFormPage({ song }: Props) {
         </div>
       </div>
 
-      {/* Row 2: Base chord + Convert button */}
+      {/* Row 2: Base chord + BPM + Convert button */}
       <div className="flex items-center gap-3">
         <Select value={baseChord} onValueChange={setBaseChord}>
           <SelectTrigger className="w-36">
@@ -250,6 +252,15 @@ export function SongFormPage({ song }: Props) {
             ))}
           </SelectContent>
         </Select>
+        <Input
+          type="number"
+          placeholder="BPM"
+          value={bpm}
+          onChange={(e) => setBpm(e.target.value)}
+          min={1}
+          max={300}
+          className="w-24"
+        />
         <div className="flex-1" />
         <Button type="button" variant="outline" size="sm" onClick={handleConvertChordPro}>
           convert chordpro
