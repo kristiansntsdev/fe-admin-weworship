@@ -1,8 +1,9 @@
-import { ChevronLeft, ChevronRight, Edit, Link2, MoreHorizontal, Trash2 } from "lucide-react";
+import { Edit, Link2, MoreHorizontal, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import type { Song } from "../page";
@@ -34,6 +35,18 @@ function hasExternalLink(song: Song): boolean {
 function isChordPro(song: Song): boolean {
   const lyrics = song.lyrics_and_chords ?? "";
   return lyrics.includes("[") && !lyrics.includes("<span");
+}
+
+function buildPageNumbers(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "...")[] = [];
+  const addPage = (p: number) => { if (!pages.includes(p)) pages.push(p); };
+  addPage(1);
+  if (current > 3) pages.push("...");
+  for (let p = Math.max(2, current - 1); p <= Math.min(total - 1, current + 1); p++) addPage(p);
+  if (current < total - 2) pages.push("...");
+  addPage(total);
+  return pages;
 }
 
 export function SongsTable({ songs = [], total, page, limit, onPageChange, onEdit, onDelete }: Props) {
@@ -111,26 +124,43 @@ export function SongsTable({ songs = [], total, page, limit, onPageChange, onEdi
           <span>
             Page {page} of {totalPages} ({total} songs)
           </span>
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => onPageChange(page - 1)}
-              disabled={page <= 1}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => onPageChange(page + 1)}
-              disabled={page >= totalPages}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
+          <Pagination className="w-auto mx-0">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); if (page > 1) onPageChange(page - 1); }}
+                  aria-disabled={page <= 1}
+                  className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              {buildPageNumbers(page, totalPages).map((p, i) =>
+                p === "..." ? (
+                  <PaginationItem key={`ellipsis-${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      href="#"
+                      isActive={p === page}
+                      onClick={(e) => { e.preventDefault(); onPageChange(p as number); }}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); if (page < totalPages) onPageChange(page + 1); }}
+                  aria-disabled={page >= totalPages}
+                  className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>
