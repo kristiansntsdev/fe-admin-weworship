@@ -64,7 +64,7 @@ export function SongsTable({ songs = [], total, page, limit, onPageChange, onEdi
               songs.map((song) => (
                 <TableRow key={song.id}>
                   <TableCell className="font-medium">{song.title}</TableCell>
-                  <TableCell className="text-muted-foreground">{song.artist}</TableCell>
+                  <TableCell className="text-muted-foreground">{Array.isArray(song.artist) ? song.artist.join(", ") : song.artist}</TableCell>
                   <TableCell>{song.base_chord || "—"}</TableCell>
                   <TableCell>
                     {isChordPro(song)

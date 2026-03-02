@@ -7,7 +7,7 @@ export interface Song {
   id: number;
   title: string;
   slug: string;
-  artist: string;
+  artist: string | string[];
   base_chord: string;
   lyrics_and_chords: string;
   external_links: unknown;
