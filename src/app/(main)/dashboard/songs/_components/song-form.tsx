@@ -35,7 +35,7 @@ export function SongForm({ song, onSuccess, onCancel }: Props) {
     resolver: zodResolver(songSchema),
     defaultValues: {
       title: song?.title ?? "",
-      artist: song?.artist ?? "",
+      artist: Array.isArray(song?.artist) ? song.artist.join(", ") : (song?.artist ?? ""),
       base_chord: song?.base_chord ?? "",
       lyrics_and_chords: song?.lyrics_and_chords ?? "",
       external_links: song?.external_links ? JSON.stringify(song.external_links) : "",
