@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,12 +62,23 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch, c
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex gap-2 flex-wrap">
           <form onSubmit={handleSearch} className="flex gap-2">
-            <Input
-              placeholder="Search songs..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-52"
-            />
+            <div className="relative">
+              <Input
+                placeholder="Search songs..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-52 pr-8"
+              />
+              {search && (
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => { setSearch(""); router.push(`/dashboard/songs?${buildParams({ search: "", page: "1" })}`); }}
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
             <Button type="submit" variant="outline" size="icon">
               <Search className="size-4" />
             </Button>
