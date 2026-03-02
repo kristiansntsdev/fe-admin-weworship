@@ -38,11 +38,16 @@ export function proxy(req: NextRequest) {
   if (isDashboard && sessionToken) {
     const role = decodeRole(sessionToken);
 
-    // Invalid token or plain user → redirect to login
-    if (!role || role === "user") {
+    // Invalid token → redirect to login
+    if (!role) {
       const loginUrl = new URL("/auth/v2/login", req.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+
+    // Valid token but insufficient role (plain user) → unauthorized
+    if (role === "user") {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
     // Maintenancer cannot access admin-only paths
