@@ -16,6 +16,7 @@ const songSchema = z.object({
   title: z.string().min(1, "Title is required"),
   artist: z.string().min(1, "Artist is required"),
   base_chord: z.string().optional(),
+  bpm: z.coerce.number().int().min(1).max(300).optional().or(z.literal("")),
   lyrics_and_chords: z.string().optional(),
   external_links: z.string().optional(),
   dmca_takedown: z.boolean().default(false),
@@ -37,6 +38,7 @@ export function SongForm({ song, onSuccess, onCancel }: Props) {
       title: song?.title ?? "",
       artist: Array.isArray(song?.artist) ? song.artist.join(", ") : (song?.artist ?? ""),
       base_chord: song?.base_chord ?? "",
+      bpm: song?.bpm ?? "",
       lyrics_and_chords: song?.lyrics_and_chords ?? "",
       external_links: song?.external_links ? JSON.stringify(song.external_links) : "",
       dmca_takedown: song?.dmca_takedown ?? false,
@@ -47,6 +49,7 @@ export function SongForm({ song, onSuccess, onCancel }: Props) {
   async function onSubmit(values: SongFormValues) {
     const body = {
       ...values,
+      bpm: values.bpm === "" ? null : Number(values.bpm),
       external_links: values.external_links
         ? (() => {
             try {
@@ -108,19 +111,35 @@ export function SongForm({ song, onSuccess, onCancel }: Props) {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="base_chord"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Base Chord (Key)</FormLabel>
-              <FormControl>
-                <Input placeholder="C, G, Am, etc." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="base_chord"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Base Chord (Key)</FormLabel>
+                <FormControl>
+                  <Input placeholder="C, G, Am, etc." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="bpm"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>BPM</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="e.g. 120" min={1} max={300} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}

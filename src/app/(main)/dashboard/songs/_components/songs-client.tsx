@@ -22,19 +22,23 @@ interface Props {
   currentSearch: string;
   currentHasLink: string;
   currentChordPro: string;
+  currentSortBy: string;
+  currentSortOrder: string;
 }
 
-export function SongsClient({ songs, total, limit, currentPage, currentSearch, currentHasLink, currentChordPro }: Props) {
+export function SongsClient({ songs, total, limit, currentPage, currentSearch, currentHasLink, currentChordPro, currentSortBy, currentSortOrder }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState(currentSearch);
   const [deleteSong, setDeleteSong] = useState<Song | null>(null);
 
   function buildParams(overrides: Record<string, string>) {
     const p = new URLSearchParams();
-    const merged = { search, has_link: currentHasLink, chordpro: currentChordPro, page: "1", ...overrides };
+    const merged = { search, has_link: currentHasLink, chordpro: currentChordPro, sortBy: currentSortBy, sortOrder: currentSortOrder, page: "1", ...overrides };
     if (merged.search) p.set("search", merged.search);
     if (merged.has_link && merged.has_link !== "all") p.set("has_link", merged.has_link);
     if (merged.chordpro && merged.chordpro !== "all") p.set("chordpro", merged.chordpro);
+    if (merged.sortBy && merged.sortBy !== "createdAt") p.set("sortBy", merged.sortBy);
+    if (merged.sortOrder && merged.sortOrder !== "DESC") p.set("sortOrder", merged.sortOrder);
     if (merged.page !== "1") p.set("page", merged.page);
     return p.toString().replace(/\+/g, "%20");
   }
@@ -46,6 +50,11 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch, c
 
   function handlePage(page: number) {
     router.push(`/dashboard/songs?${buildParams({ page: String(page) })}`);
+  }
+
+  function handleSort(col: string) {
+    const newOrder = currentSortBy === col && currentSortOrder === "ASC" ? "DESC" : "ASC";
+    router.push(`/dashboard/songs?${buildParams({ sortBy: col, sortOrder: newOrder, page: "1" })}`);
   }
 
   return (
@@ -106,7 +115,10 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch, c
         total={total}
         page={currentPage}
         limit={limit}
+        sortBy={currentSortBy}
+        sortOrder={currentSortOrder}
         onPageChange={handlePage}
+        onSort={handleSort}
         onEdit={(song) => router.push(`/dashboard/songs/${song.id}/edit`)}
         onDelete={setDeleteSong}
       />

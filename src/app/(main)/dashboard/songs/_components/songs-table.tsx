@@ -1,4 +1,4 @@
-import { Edit, Link2, MoreHorizontal, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Edit, Link2, MoreHorizontal, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,10 @@ interface Props {
   total: number;
   page: number;
   limit: number;
+  sortBy: string;
+  sortOrder: string;
   onPageChange: (page: number) => void;
+  onSort: (col: string) => void;
   onEdit: (song: Song) => void;
   onDelete: (song: Song) => void;
 }
@@ -49,8 +52,24 @@ function buildPageNumbers(current: number, total: number): (number | "...")[] {
   return pages;
 }
 
-export function SongsTable({ songs = [], total, page, limit, onPageChange, onEdit, onDelete }: Props) {
+export function SongsTable({ songs = [], total, page, limit, sortBy, sortOrder, onPageChange, onSort, onEdit, onDelete }: Props) {
   const totalPages = Math.ceil(total / limit);
+
+  function SortIcon({ col }: { col: string }) {
+    if (sortBy !== col) return <ArrowUpDown className="size-3 ml-1 opacity-40" />;
+    return sortOrder === "ASC" ? <ArrowUp className="size-3 ml-1" /> : <ArrowDown className="size-3 ml-1" />;
+  }
+
+  function SortHead({ col, label }: { col: string; label: string }) {
+    return (
+      <button
+        className="flex items-center gap-0.5 hover:text-foreground transition-colors font-medium"
+        onClick={() => onSort(col)}
+      >
+        {label}<SortIcon col={col} />
+      </button>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -58,9 +77,10 @@ export function SongsTable({ songs = [], total, page, limit, onPageChange, onEdi
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Artist</TableHead>
-              <TableHead>Key</TableHead>
+              <TableHead><SortHead col="title" label="Title" /></TableHead>
+              <TableHead><SortHead col="artist" label="Artist" /></TableHead>
+              <TableHead><SortHead col="base_chord" label="Key" /></TableHead>
+              <TableHead><SortHead col="bpm" label="BPM" /></TableHead>
               <TableHead>ChordPro</TableHead>
               <TableHead>Links</TableHead>
               <TableHead className="w-10" />
@@ -69,7 +89,7 @@ export function SongsTable({ songs = [], total, page, limit, onPageChange, onEdi
           <TableBody>
             {songs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                   No songs found.
                 </TableCell>
               </TableRow>
@@ -79,6 +99,7 @@ export function SongsTable({ songs = [], total, page, limit, onPageChange, onEdi
                   <TableCell className="font-medium">{song.title}</TableCell>
                   <TableCell className="text-muted-foreground">{Array.isArray(song.artist) ? song.artist.join(", ") : song.artist}</TableCell>
                   <TableCell>{song.base_chord || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{song.bpm ?? "—"}</TableCell>
                   <TableCell>
                     {isChordPro(song)
                       ? <Badge variant="outline" className="text-green-600 border-green-600">Ready</Badge>

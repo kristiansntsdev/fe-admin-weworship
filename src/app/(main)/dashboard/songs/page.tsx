@@ -9,6 +9,7 @@ export interface Song {
   slug: string;
   artist: string | string[];
   base_chord: string;
+  bpm: number | null;
   lyrics_and_chords: string;
   external_links: unknown;
   dmca_takedown: boolean;
@@ -27,9 +28,9 @@ interface Pagination {
   hasPrevPage: boolean;
 }
 
-async function fetchSongs(page = 1, limit = 20, search = "", hasLink?: string, chordpro?: string) {
+async function fetchSongs(page = 1, limit = 20, search = "", hasLink?: string, chordpro?: string, sortBy = "createdAt", sortOrder = "DESC") {
   try {
-    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    const params = new URLSearchParams({ page: String(page), limit: String(limit), sortBy, sortOrder });
     if (search) params.set("search", search);
     if (hasLink === "true" || hasLink === "false") params.set("has_link", hasLink);
     if (chordpro === "true" || chordpro === "false") params.set("chordpro", chordpro);
@@ -49,12 +50,14 @@ async function fetchSongs(page = 1, limit = 20, search = "", hasLink?: string, c
 export default async function SongsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string; has_link?: string; chordpro?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; has_link?: string; chordpro?: string; sortBy?: string; sortOrder?: string }>;
 }) {
   const params = await searchParams;
   const page = Number(params.page ?? 1);
   const search = params.search ?? "";
-  const { songs, total, limit } = await fetchSongs(page, 20, search, params.has_link, params.chordpro);
+  const sortBy = params.sortBy ?? "createdAt";
+  const sortOrder = params.sortOrder ?? "DESC";
+  const { songs, total, limit } = await fetchSongs(page, 20, search, params.has_link, params.chordpro, sortBy, sortOrder);
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
@@ -62,7 +65,7 @@ export default async function SongsPage({
         <h1 className="text-2xl font-bold">Songs</h1>
         <p className="text-muted-foreground text-sm">Manage the song library</p>
       </div>
-      <SongsClient songs={songs} total={total} limit={limit} currentPage={page} currentSearch={search} currentHasLink={params.has_link ?? "all"} currentChordPro={params.chordpro ?? "all"} />
+      <SongsClient songs={songs} total={total} limit={limit} currentPage={page} currentSearch={search} currentHasLink={params.has_link ?? "all"} currentChordPro={params.chordpro ?? "all"} currentSortBy={sortBy} currentSortOrder={sortOrder} />
     </div>
   );
 }
