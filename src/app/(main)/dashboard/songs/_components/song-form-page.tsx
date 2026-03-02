@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Song } from "../page";
 
 const CHORD_KEYS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
+const LINK_PROVIDERS = ["Spotify", "Youtube", "Apple Music"] as const;
+type LinkProvider = typeof LINK_PROVIDERS[number];
 
 // Returns true if this line has chords but no lyric text.
 // After stripping [chord] tokens and slash separators between them, only whitespace should remain.
@@ -119,7 +121,7 @@ export function SongFormPage({ song }: Props) {
   const [baseChord, setBaseChord] = useState(song?.base_chord ?? "");
   const [bpm, setBpm] = useState<string>(song?.bpm != null ? String(song.bpm) : "");
   const [chordPro, setChordPro] = useState(song?.lyrics_and_chords ?? "");
-  const [links, setLinks] = useState<{ provider: string; url: string }[]>(() => {
+  const [links, setLinks] = useState<{ provider: LinkProvider; url: string }[]>(() => {
     try {
       const raw = song?.external_links;
       if (!raw) return [];
@@ -128,7 +130,9 @@ export function SongFormPage({ song }: Props) {
         : typeof raw === "string" ? raw : "";
       if (!str) return [];
       const parsed = JSON.parse(str) as Record<string, string>;
-      return Object.entries(parsed).map(([provider, url]) => ({ provider, url }));
+      return Object.entries(parsed)
+        .filter(([p]) => LINK_PROVIDERS.includes(p as LinkProvider))
+        .map(([provider, url]) => ({ provider: provider as LinkProvider, url }));
     } catch { return []; }
   });
   const [error, setError] = useState("");
@@ -288,39 +292,60 @@ export function SongFormPage({ song }: Props) {
 
       {/* External links */}
       <div className="flex flex-col gap-2">
-        {links.map((link, i) => (
-          <div key={i} className="flex gap-2 items-center">
-            <Input
-              placeholder="provider (e.g. shazam)"
-              value={link.provider}
-              onChange={(e) => setLinks((prev) => prev.map((l, idx) => idx === i ? { ...l, provider: e.target.value } : l))}
-              className="w-36 shrink-0"
-            />
-            <Input
-              placeholder="https://..."
-              value={link.url}
-              onChange={(e) => setLinks((prev) => prev.map((l, idx) => idx === i ? { ...l, url: e.target.value } : l))}
-              className="flex-1"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setLinks((prev) => prev.filter((_, idx) => idx !== i))}
-            >
-              <X className="size-4" />
-            </Button>
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="w-fit"
-          onClick={() => setLinks((prev) => [...prev, { provider: "", url: "" }])}
-        >
-          + add link
-        </Button>
+        {links.map((link, i) => {
+          const usedProviders = links.map((l, idx) => idx !== i ? l.provider : null).filter(Boolean);
+          const availableProviders = LINK_PROVIDERS.filter((p) => !usedProviders.includes(p));
+          return (
+            <div key={i} className="flex gap-2 items-center">
+              <Select
+                value={link.provider}
+                onValueChange={(v) => setLinks((prev) => prev.map((l, idx) => idx === i ? { ...l, provider: v as LinkProvider } : l))}
+              >
+                <SelectTrigger className="w-36 shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LINK_PROVIDERS.filter((p) => p === link.provider || !usedProviders.includes(p)).map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder={
+                  link.provider === "Spotify" ? "https://open.spotify.com/track/..." :
+                  link.provider === "Youtube" ? "https://www.youtube.com/watch?v=..." :
+                  "https://music.apple.com/..."
+                }
+                value={link.url}
+                onChange={(e) => setLinks((prev) => prev.map((l, idx) => idx === i ? { ...l, url: e.target.value } : l))}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setLinks((prev) => prev.filter((_, idx) => idx !== i))}
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
+          );
+        })}
+        {links.length < LINK_PROVIDERS.length && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() => {
+              const used = links.map((l) => l.provider);
+              const next = LINK_PROVIDERS.find((p) => !used.includes(p));
+              if (next) setLinks((prev) => [...prev, { provider: next, url: "" }]);
+            }}
+          >
+            + add link
+          </Button>
+        )}
       </div>
 
       {error && <p className="text-destructive text-sm">{error}</p>}
