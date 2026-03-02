@@ -22,7 +22,7 @@ const nextConfig = {
       "http://localhost:3001";
     return [
       {
-        source: "/api/((?!admin/).*)",
+        source: "/api/:path((?!admin/).*)",
         destination: `${goApiUrl}/api/:path*`,
       },
     ];
