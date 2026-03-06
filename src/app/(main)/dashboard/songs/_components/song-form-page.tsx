@@ -85,6 +85,56 @@ function mergeChordLines(text: string): string {
   return out.join("\n");
 }
 
+// Matches a single plain-text chord token (no brackets), e.g. Ab, Cm7, F#m, G/B
+const PLAIN_CHORD_TOKEN_RE = /^[A-G][b#]?(?:m(?:aj)?7?|min7?|dim[0-9]?|aug|sus[24]?|add[0-9]+|[0-9])?(?:\/[A-G][b#]?)?$/;
+
+function isPlainChordOnlyLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  return tokens.length > 0 && tokens.every((t) => PLAIN_CHORD_TOKEN_RE.test(t));
+}
+
+// Wrap each non-whitespace token in brackets so "Ab   Cm  Ebm" → "[Ab]   [Cm]  [Ebm]"
+function bracketChordLine(line: string): string {
+  return line.replace(/\S+/g, (m) => `[${m}]`);
+}
+
+// Convert plain chord-sheet format (chords above lyrics, no brackets) to inline ChordPro.
+// Lines that are already inline ChordPro or lyric-only pass through unchanged.
+function convertPlainChordSheet(text: string): string {
+  const lines = text.split("\n");
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (isPlainChordOnlyLine(line)) {
+      // Skip any blank lines between chord and lyric (artifact of <div>/<p> HTML wrapping).
+      // Each div tag produces a \n for both opening and closing, creating empty lines.
+      let j = i + 1;
+      while (j < lines.length && lines[j].trim() === "") j++;
+      const lyricLine = lines[j];
+      if (
+        lyricLine !== undefined &&
+        !isPlainChordOnlyLine(lyricLine) &&
+        // Don't merge if candidate is a ChordPro section header like [Verse 1]
+        !/^\[(?!.*\])/.test(lyricLine)
+      ) {
+        out.push(mergeChordWithLyric(bracketChordLine(line), lyricLine));
+        i = j + 1;
+      } else {
+        // No lyric follows — output bracketed chord line and move on
+        out.push(bracketChordLine(line));
+        i++;
+      }
+    } else {
+      out.push(line);
+      i++;
+    }
+  }
+  return out.join("\n");
+}
+
 function htmlToChordPro(html: string): string {
   const text = html
     // Inline chord spans → [chord]
@@ -93,9 +143,11 @@ function htmlToChordPro(html: string): string {
     .replace(/<span class="on"[^>]*>([^<]*)<\/span>/g, "$1")
     // Merge adjacent chord brackets with slash: [B]/[F#] → [B/F#]
     .replace(/\[([^\]]+)\]\/\[([^\]]+)\]/g, "[$1/$2]")
-    // Block-level newlines
+    // Block-level newlines: opening tag → newline, closing tag → nothing
+    // (avoids double-newlines between consecutive <div>chord</div><div>lyric</div>)
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/?(div|p|pre)[^>]*>/gi, "\n")
+    .replace(/<(div|p|pre)[^>]*>/gi, "\n")
+    .replace(/<\/(div|p|pre)[^>]*>/gi, "")
     // Strip remaining tags
     .replace(/<[^>]+>/g, "")
     // HTML entities
@@ -128,10 +180,10 @@ export function SongFormPage({ song, returnUrl }: Props) {
   const [bpm, setBpm] = useState<string>(song?.bpm != null ? String(song.bpm) : "");
   const [chordPro, setChordPro] = useState(() => {
     const raw = song?.lyrics_and_chords ?? "";
-    // If stored as HTML (from WYSIWYG editor), pre-convert so the textarea
-    // shows ChordPro immediately instead of raw HTML markup.
-    // Plain text / already-ChordPro content is used as-is.
-    return isHtmlContent(raw) ? htmlToChordPro(raw) : raw;
+    // HTML content (from WYSIWYG editor) → convert span-based chords to inline ChordPro
+    if (isHtmlContent(raw)) return htmlToChordPro(raw);
+    // Plain chord-sheet (chords above lyrics, no brackets) → merge into inline ChordPro
+    return convertPlainChordSheet(raw);
   });
   const [links, setLinks] = useState<{ provider: LinkProvider; url: string }[]>(() => {
     try {
@@ -173,7 +225,9 @@ export function SongFormPage({ song, returnUrl }: Props) {
 
   function handleConvertChordPro() {
     const html = editorRef.current?.innerHTML ?? "";
-    setChordPro(htmlToChordPro(html));
+    const fromHtml = htmlToChordPro(html);
+    // Also merge any plain chord-above-lyric lines that weren't wrapped in span.c
+    setChordPro(convertPlainChordSheet(fromHtml));
   }
 
   async function handleSubmit() {
