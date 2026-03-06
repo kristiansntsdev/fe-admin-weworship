@@ -130,7 +130,11 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch, c
         sortOrder={currentSortOrder}
         onPageChange={handlePage}
         onSort={handleSort}
-        onEdit={(song) => router.push(`/dashboard/songs/${song.id}/edit`)}
+        onEdit={(song) => {
+          const qs = buildParams({ page: String(currentPage) });
+          const returnUrl = `/dashboard/songs${qs ? `?${qs}` : ""}`;
+          router.push(`/dashboard/songs/${song.id}/edit?returnUrl=${encodeURIComponent(returnUrl)}`);
+        }}
         onDelete={setDeleteSong}
       />
 

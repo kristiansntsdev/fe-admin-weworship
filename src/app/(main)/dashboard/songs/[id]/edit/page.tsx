@@ -15,8 +15,9 @@ async function fetchSong(id: string): Promise<Song | null> {
   }
 }
 
-export default async function EditSongPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditSongPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnUrl?: string }> }) {
   const { id } = await params;
+  const { returnUrl } = await searchParams;
   const song = await fetchSong(id);
 
   if (!song) notFound();
@@ -24,7 +25,7 @@ export default async function EditSongPage({ params }: { params: Promise<{ id: s
   return (
     <div className="flex flex-col gap-5 p-2">
       <h1 className="text-xl font-medium">Edit Song</h1>
-      <SongFormPage song={song} />
+      <SongFormPage song={song} returnUrl={returnUrl} />
     </div>
   );
 }

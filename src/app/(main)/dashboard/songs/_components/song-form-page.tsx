@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { X } from "lucide-react";
+import { toast } from "sonner";
 
+import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,9 +108,10 @@ function htmlToChordPro(html: string): string {
 
 interface Props {
   song?: Song;
+  returnUrl?: string;
 }
 
-export function SongFormPage({ song }: Props) {
+export function SongFormPage({ song, returnUrl }: Props) {
   const router = useRouter();
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -193,7 +195,8 @@ export function SongFormPage({ song }: Props) {
         setError(err.message ?? "Failed to save song");
         return;
       }
-      router.push("/dashboard/songs");
+      toast.success(song ? "Song updated successfully" : "Song created successfully");
+      router.push(returnUrl ?? "/dashboard/songs");
       router.refresh();
     } finally {
       setSubmitting(false);
