@@ -15,6 +15,10 @@ import type { Song } from "../page";
 
 const CHORD_KEYS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
 const LINK_PROVIDERS = ["Spotify", "Youtube", "Apple Music"] as const;
+
+function isHtmlContent(str: string): boolean {
+  return /<[a-z][\s\S]*>/i.test(str);
+}
 type LinkProvider = typeof LINK_PROVIDERS[number];
 
 // Returns true if this line has chords but no lyric text.
@@ -122,7 +126,13 @@ export function SongFormPage({ song, returnUrl }: Props) {
   const [artistInput, setArtistInput] = useState("");
   const [baseChord, setBaseChord] = useState(song?.base_chord ?? "");
   const [bpm, setBpm] = useState<string>(song?.bpm != null ? String(song.bpm) : "");
-  const [chordPro, setChordPro] = useState(song?.lyrics_and_chords ?? "");
+  const [chordPro, setChordPro] = useState(() => {
+    const raw = song?.lyrics_and_chords ?? "";
+    // If stored as HTML (from WYSIWYG editor), pre-convert so the textarea
+    // shows ChordPro immediately instead of raw HTML markup.
+    // Plain text / already-ChordPro content is used as-is.
+    return isHtmlContent(raw) ? htmlToChordPro(raw) : raw;
+  });
   const [links, setLinks] = useState<{ provider: LinkProvider; url: string }[]>(() => {
     try {
       const raw = song?.external_links;
@@ -141,8 +151,11 @@ export function SongFormPage({ song, returnUrl }: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (editorRef.current && song?.lyrics_and_chords) {
-      editorRef.current.innerHTML = song.lyrics_and_chords;
+    const raw = song?.lyrics_and_chords ?? "";
+    if (editorRef.current && raw && isHtmlContent(raw)) {
+      // Only populate the WYSIWYG editor when content is HTML.
+      // Plain text / ChordPro songs go straight to the textarea (right panel).
+      editorRef.current.innerHTML = raw;
     }
   }, [song?.lyrics_and_chords]);
 
