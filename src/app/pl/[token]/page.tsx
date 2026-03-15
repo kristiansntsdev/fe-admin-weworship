@@ -12,14 +12,14 @@ export default async function PlaylistSharePage({
 }) {
   const { token } = await params;
   const deepLink = `weworship://playlist/${token}/join`;
+  const expoGoDeepLink = `exp+weworship://playlist/${token}/join`;
 
   return (
     <html lang="en">
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        {/* Auto-redirect via meta refresh as fallback */}
-        <meta httpEquiv="refresh" content={`1;url=${deepLink}`} />
+        {/* Auto-redirect via meta refresh removed — handled by script below */}
       </head>
       <body
         style={{
@@ -144,11 +144,24 @@ export default async function PlaylistSharePage({
           </p>
         </div>
 
-        {/* Auto-redirect script */}
+        {/* Auto-redirect: try production scheme first, fallback to Expo Go scheme */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `setTimeout(function(){window.location.href=${JSON.stringify(deepLink)}},800);`,
-          }}
+            __html: `
+(function(){
+  var prod = ${JSON.stringify(deepLink)};
+  var dev  = ${JSON.stringify(expoGoDeepLink)};
+  var hidden = false;
+  document.addEventListener('visibilitychange', function(){ hidden = true; });
+  window.addEventListener('blur', function(){ hidden = true; });
+  // Try production scheme
+  window.location.href = prod;
+  // After 1.5s, if still on page (app didn't open), try Expo Go scheme
+  setTimeout(function(){
+    if(!hidden){ window.location.href = dev; }
+  }, 1500);
+})();
+`}}
         />
       </body>
     </html>
