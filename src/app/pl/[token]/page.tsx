@@ -127,9 +127,27 @@ export default async function PlaylistSharePage({
               borderRadius: 16,
               textDecoration: "none",
               marginBottom: 12,
+              boxSizing: "border-box",
             }}
           >
             Open in WeWorship
+          </a>
+          <a
+            href={expoGoDeepLink}
+            style={{
+              display: "block",
+              width: "100%",
+              padding: 12,
+              background: "transparent",
+              color: "rgba(255,255,255,0.35)",
+              fontSize: 13,
+              borderRadius: 16,
+              textDecoration: "none",
+              marginBottom: 4,
+              boxSizing: "border-box",
+            }}
+          >
+            Open in Expo Go (dev)
           </a>
 
           <p
@@ -151,15 +169,16 @@ export default async function PlaylistSharePage({
 (function(){
   var prod = ${JSON.stringify(deepLink)};
   var dev  = ${JSON.stringify(expoGoDeepLink)};
-  var hidden = false;
-  document.addEventListener('visibilitychange', function(){ hidden = true; });
-  window.addEventListener('blur', function(){ hidden = true; });
-  // Try production scheme
-  window.location.href = prod;
-  // After 1.5s, if still on page (app didn't open), try Expo Go scheme
-  setTimeout(function(){
-    if(!hidden){ window.location.href = dev; }
-  }, 1500);
+  // Only auto-redirect on non-iOS to avoid Safari "invalid address" error.
+  // iOS requires a user gesture to open custom URL schemes.
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(!isIOS){
+    var hidden = false;
+    document.addEventListener('visibilitychange', function(){ hidden = true; });
+    window.addEventListener('blur', function(){ hidden = true; });
+    window.location.href = prod;
+    setTimeout(function(){ if(!hidden){ window.location.href = dev; } }, 1500);
+  }
 })();
 `}}
         />
