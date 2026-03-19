@@ -2,6 +2,7 @@ import {
   ChartBar,
   History,
   LayoutDashboard,
+  ListMusic,
   type LucideIcon,
   Music,
   Music2,
@@ -61,6 +62,12 @@ export const sidebarItems: NavGroup[] = [
         title: "Songs",
         url: "/dashboard/songs",
         icon: Music2,
+      },
+      {
+        title: "Song Requests",
+        url: "/dashboard/song-requests",
+        icon: ListMusic,
+        roles: ["admin"],
       },
       {
         title: "Users",
