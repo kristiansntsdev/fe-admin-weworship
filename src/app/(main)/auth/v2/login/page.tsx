@@ -13,9 +13,9 @@ import { GoogleButton } from "../../_components/social-auth/google-button";
 export default async function LoginV2({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; registered?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, registered } = await searchParams;
 
   return (
     <>
@@ -25,6 +25,11 @@ export default async function LoginV2({
           <p className="text-muted-foreground text-sm">Please enter your details to login.</p>
         </div>
         <div className="space-y-4">
+          {registered === "1" && (
+            <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
+              Account created successfully! Please sign in. Access will be granted once an admin approves your account.
+            </div>
+          )}
           <OAuthError error={error} />
           <GoogleButton className="w-full" />
           <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-border after:border-t">

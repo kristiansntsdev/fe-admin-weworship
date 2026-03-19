@@ -65,21 +65,9 @@ export async function register(name: string, email: string, password: string): P
     return { error: body.message ?? "Registration failed. Please try again." };
   }
 
-  const token: string | undefined = body.data?.token;
-  if (!token) {
-    return { error: "Registration failed. Please try again." };
-  }
-
-  const cookieStore = await cookies();
-  cookieStore.set(AUTH_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30,
-    path: "/",
-  });
-
-  redirect("/dashboard/default");
+  // Don't set session cookie — new accounts have role "user" which cannot access the dashboard.
+  // Redirect to login so an admin can upgrade the role first.
+  redirect("/auth/v2/login?registered=1");
 }
 
 export async function logout(): Promise<void> {
