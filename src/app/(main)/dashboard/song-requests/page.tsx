@@ -46,7 +46,7 @@ export default async function SongRequestsPage({
   searchParams: Promise<{ page?: string; status?: string }>;
 }) {
   const sessionUser = await getSessionUser();
-  if (sessionUser?.role !== "admin") redirect("/unauthorized");
+  if (sessionUser?.role !== "admin" && sessionUser?.role !== "maintainer") redirect("/unauthorized");
 
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page ?? 1));

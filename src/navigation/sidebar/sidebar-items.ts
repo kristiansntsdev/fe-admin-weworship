@@ -67,7 +67,7 @@ export const sidebarItems: NavGroup[] = [
         title: "Song Requests",
         url: "/dashboard/song-requests",
         icon: ListMusic,
-        roles: ["admin"],
+        roles: ["admin", "maintainer"],
       },
       {
         title: "Users",
