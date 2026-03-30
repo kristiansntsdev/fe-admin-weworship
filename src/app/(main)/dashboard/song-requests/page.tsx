@@ -38,7 +38,8 @@ async function fetchSongRequests(page: number, status: string): Promise<SongRequ
       page: innerData?.page ?? page,
       limit: innerData?.limit ?? 20,
     };
-  } catch {
+  } catch (err) {
+    console.error("Failed to fetch song requests:", err);
     return { data: [], total: 0, page, limit: 20 };
   }
 }
