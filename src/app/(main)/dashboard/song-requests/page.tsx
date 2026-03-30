@@ -27,13 +27,16 @@ async function fetchSongRequests(page: number, status: string): Promise<SongRequ
   try {
     const params = new URLSearchParams({ page: String(page), limit: "20" });
     if (status) params.set("status", status);
-    const res = await api.get<SongRequest[]>(`/api/admin/song-requests?${params}`);
-    const body = res as unknown as SongRequestsResponse;
+    const res = await api.get<any>(`/api/admin/song-requests?${params}`);
+    
+    // BE wraps response: { code: 200, message: "...", data: { data: [...], total: N, page: N, limit: N } }
+    const innerData = res.data;
+    
     return {
-      data: body.data ?? [],
-      total: body.total ?? 0,
-      page: body.page ?? page,
-      limit: body.limit ?? 20,
+      data: innerData?.data ?? [],
+      total: innerData?.total ?? 0,
+      page: innerData?.page ?? page,
+      limit: innerData?.limit ?? 20,
     };
   } catch {
     return { data: [], total: 0, page, limit: 20 };
