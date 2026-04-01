@@ -64,7 +64,7 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch, c
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative">
               <Input
-                placeholder="Search songs..."
+                placeholder="Search title, artist, or lyrics..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-52 pr-8"
