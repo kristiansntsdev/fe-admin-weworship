@@ -24,19 +24,21 @@ interface Props {
   currentChordPro: string;
   currentSortBy: string;
   currentSortOrder: string;
+  currentBaseChord: string;
 }
 
-export function SongsClient({ songs, total, limit, currentPage, currentSearch, currentHasLink, currentChordPro, currentSortBy, currentSortOrder }: Props) {
+export function SongsClient({ songs, total, limit, currentPage, currentSearch, currentHasLink, currentChordPro, currentSortBy, currentSortOrder, currentBaseChord }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState(currentSearch);
   const [deleteSong, setDeleteSong] = useState<Song | null>(null);
 
   function buildParams(overrides: Record<string, string>) {
     const p = new URLSearchParams();
-    const merged = { search, has_link: currentHasLink, chordpro: currentChordPro, sortBy: currentSortBy, sortOrder: currentSortOrder, page: "1", ...overrides };
+    const merged = { search, has_link: currentHasLink, chordpro: currentChordPro, sortBy: currentSortBy, sortOrder: currentSortOrder, base_chord: currentBaseChord, page: "1", ...overrides };
     if (merged.search) p.set("search", merged.search);
     if (merged.has_link && merged.has_link !== "all") p.set("has_link", merged.has_link);
     if (merged.chordpro && merged.chordpro !== "all") p.set("chordpro", merged.chordpro);
+    if (merged.base_chord) p.set("base_chord", merged.base_chord);
     if (merged.sortBy && merged.sortBy !== "createdAt") p.set("sortBy", merged.sortBy);
     if (merged.sortOrder && merged.sortOrder !== "DESC") p.set("sortOrder", merged.sortOrder);
     if (merged.page !== "1") p.set("page", merged.page);
@@ -109,6 +111,35 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch, c
               <SelectItem value="all">All formats</SelectItem>
               <SelectItem value="true">ChordPro ready</SelectItem>
               <SelectItem value="false">Not converted</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={currentBaseChord || "all"}
+            onValueChange={(v) => router.push(`/dashboard/songs?${buildParams({ base_chord: v === "all" ? "" : v, page: "1" })}`)}
+          >
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="All keys" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All keys</SelectItem>
+              <SelectItem value="A">A</SelectItem>
+              <SelectItem value="A#">A#</SelectItem>
+              <SelectItem value="Bb">Bb</SelectItem>
+              <SelectItem value="B">B</SelectItem>
+              <SelectItem value="C">C</SelectItem>
+              <SelectItem value="C#">C#</SelectItem>
+              <SelectItem value="Db">Db</SelectItem>
+              <SelectItem value="D">D</SelectItem>
+              <SelectItem value="D#">D#</SelectItem>
+              <SelectItem value="Eb">Eb</SelectItem>
+              <SelectItem value="E">E</SelectItem>
+              <SelectItem value="F">F</SelectItem>
+              <SelectItem value="F#">F#</SelectItem>
+              <SelectItem value="Gb">Gb</SelectItem>
+              <SelectItem value="G">G</SelectItem>
+              <SelectItem value="G#">G#</SelectItem>
+              <SelectItem value="Ab">Ab</SelectItem>
             </SelectContent>
           </Select>
         </div>
