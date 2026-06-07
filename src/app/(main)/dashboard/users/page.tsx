@@ -1,14 +1,17 @@
 import { redirect } from "next/navigation";
-import { api } from "@/lib/api";
-import { getSessionUser } from "@/lib/auth";
+
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { api } from "@/lib/api";
+import { getSessionUser } from "@/lib/auth";
+
+import { UserRoleToggle } from "./_components/user-role-toggle";
 
 export const dynamic = "force-dynamic";
 
 interface User {
   id: number;
-  name: string;
+  username: string;
   email: string;
   role: string;
   createdAt: string;
@@ -33,11 +36,11 @@ export default async function UsersPage() {
   return (
     <div className="flex flex-col gap-4 md:gap-6">
       <div>
-        <h1 className="text-2xl font-bold">Users</h1>
+        <h1 className="font-bold text-2xl">Users</h1>
         <p className="text-muted-foreground text-sm">Registered users ({users.length})</p>
       </div>
 
-      <div className="rounded-lg border overflow-hidden">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -59,10 +62,17 @@ export default async function UsersPage() {
               users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="text-muted-foreground tabular-nums">{user.id}</TableCell>
-                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell className="font-medium">{user.username}</TableCell>
                   <TableCell className="text-muted-foreground">{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === "admin" ? "default" : "outline"}>{user.role}</Badge>
+                    {user.role === "admin" ? (
+                      <Badge>admin</Badge>
+                    ) : (
+                      <UserRoleToggle
+                        userId={user.id}
+                        initialRole={user.role === "maintainer" ? "maintainer" : "user"}
+                      />
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(user.createdAt).toLocaleDateString("en-US", {
