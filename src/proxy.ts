@@ -17,6 +17,16 @@ function decodeRole(token: string): "user" | "admin" | "maintainer" | null {
   }
 }
 
+function redirectToLogin(req: NextRequest, pathname: string, clearSession = false) {
+  const loginUrl = new URL("/auth/v2/login", req.url);
+  loginUrl.searchParams.set("from", pathname);
+  const response = NextResponse.redirect(loginUrl);
+  if (clearSession) {
+    response.cookies.delete(AUTH_COOKIE);
+  }
+  return response;
+}
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const sessionToken = req.cookies.get(AUTH_COOKIE)?.value;
@@ -29,9 +39,7 @@ export function proxy(req: NextRequest) {
 
   // Protect dashboard routes — redirect to login if no session
   if (isDashboard && !sessionToken) {
-    const loginUrl = new URL("/auth/v2/login", req.url);
-    loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
+    return redirectToLogin(req, pathname);
   }
 
   // Role-based access control for dashboard
@@ -40,9 +48,7 @@ export function proxy(req: NextRequest) {
 
     // Invalid token → redirect to login
     if (!role) {
-      const loginUrl = new URL("/auth/v2/login", req.url);
-      loginUrl.searchParams.set("from", pathname);
-      return NextResponse.redirect(loginUrl);
+      return redirectToLogin(req, pathname, true);
     }
 
     // Valid token but insufficient role (plain user) → unauthorized

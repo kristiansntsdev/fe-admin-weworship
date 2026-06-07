@@ -1,6 +1,6 @@
-import Link from "next/link";
-
 import { Lock } from "lucide-react";
+
+import { logout } from "@/server/auth-actions";
 
 export default function page() {
   return (
@@ -13,13 +13,14 @@ export default function page() {
           this is an error.
         </p>
         <div className="mt-6">
-          <Link
-            href="/auth/v2/login"
-            className="inline-flex items-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm shadow-xs transition-colors hover:bg-primary/90 focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            prefetch={false}
-          >
-            Go to Login
-          </Link>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="inline-flex items-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm shadow-xs transition-colors hover:bg-primary/90 focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            >
+              Go to Login
+            </button>
+          </form>
         </div>
       </div>
     </div>
