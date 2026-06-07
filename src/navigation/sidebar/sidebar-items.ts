@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   ListMusic,
   type LucideIcon,
+  MessageSquareWarning,
   Music,
   Music2,
   Users,
@@ -67,6 +68,12 @@ export const sidebarItems: NavGroup[] = [
         title: "Song Requests",
         url: "/dashboard/song-requests",
         icon: ListMusic,
+        roles: ["admin", "maintainer"],
+      },
+      {
+        title: "Song Reports",
+        url: "/dashboard/song-reports",
+        icon: MessageSquareWarning,
         roles: ["admin", "maintainer"],
       },
       {
