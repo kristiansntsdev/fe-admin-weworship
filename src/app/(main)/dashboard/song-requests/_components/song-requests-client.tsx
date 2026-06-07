@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,11 @@ const STATUS_LABELS: Record<string, string> = {
   rejected: "Rejected",
 };
 
+const LYRICS_TYPE_LABELS: Record<string, string> = {
+  lyrics: "Lyrics Only",
+  lyrics_chords: "Lyrics + Chords",
+};
+
 function formatDate(ts: string) {
   return new Date(ts).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
 }
@@ -42,12 +47,12 @@ function UpdateStatusDialog({ request, open, onOpenChange, onSuccess }: UpdateDi
   const [loading, setLoading] = useState(false);
 
   // sync when request changes
-  useState(() => {
+  useEffect(() => {
     if (request) {
       setStatus(request.status);
       setNotes(request.admin_notes ?? "");
     }
-  });
+  }, [request]);
 
   async function handleSave() {
     if (!request) return;
@@ -74,14 +79,33 @@ function UpdateStatusDialog({ request, open, onOpenChange, onSuccess }: UpdateDi
         <div className="flex flex-col gap-4 py-2">
           <div>
             <p className="text-sm font-medium">{request?.song_title}</p>
-            <a
-              href={request?.reference_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-500 underline truncate block max-w-xs"
-            >
-              {request?.reference_link}
-            </a>
+            <p className="text-xs text-muted-foreground">
+              {request ? LYRICS_TYPE_LABELS[request.lyrics_type] ?? request.lyrics_type : ""}
+            </p>
+            {request?.reference_link ? (
+              <a
+                href={request.reference_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-500 underline truncate block max-w-xs"
+              >
+                {request.reference_link}
+              </a>
+            ) : null}
+          </div>
+          {request?.lyrics ? (
+            <div className="flex flex-col gap-1.5">
+              <Label>Submitted Lyrics</Label>
+              <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-md border bg-muted/40 p-3 text-sm leading-6">
+                {request.lyrics}
+              </pre>
+            </div>
+          ) : null}
+          <div className="flex flex-col gap-1.5">
+            <Label>Reference Link</Label>
+            <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+              {request?.reference_link || "No reference link provided"}
+            </p>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label>Status</Label>
@@ -172,6 +196,7 @@ export function SongRequestsClient({ requests, total, page, limit, status }: Pro
           <TableHeader>
             <TableRow>
               <TableHead>Song Title</TableHead>
+              <TableHead>Submitted</TableHead>
               <TableHead>Reference</TableHead>
               <TableHead>Requester ID</TableHead>
               <TableHead>Status</TableHead>
@@ -182,7 +207,7 @@ export function SongRequestsClient({ requests, total, page, limit, status }: Pro
           <TableBody>
             {requests.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   No song requests found.
                 </TableCell>
               </TableRow>
@@ -191,15 +216,31 @@ export function SongRequestsClient({ requests, total, page, limit, status }: Pro
                 <TableRow key={req.id}>
                   <TableCell className="font-medium">{req.song_title}</TableCell>
                   <TableCell>
-                    <a
-                      href={req.reference_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 underline text-sm truncate block max-w-[200px]"
-                      title={req.reference_link}
-                    >
-                      {req.reference_link}
-                    </a>
+                    <div className="flex flex-col gap-1">
+                      <Badge variant="secondary">
+                        {LYRICS_TYPE_LABELS[req.lyrics_type] ?? req.lyrics_type}
+                      </Badge>
+                      {req.lyrics ? (
+                        <span className="text-xs text-muted-foreground line-clamp-2 max-w-[220px]">
+                          {req.lyrics}
+                        </span>
+                      ) : null}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {req.reference_link ? (
+                      <a
+                        href={req.reference_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 underline text-sm truncate block max-w-[200px]"
+                        title={req.reference_link}
+                      >
+                        {req.reference_link}
+                      </a>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">None</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">#{req.user_id}</TableCell>
                   <TableCell>

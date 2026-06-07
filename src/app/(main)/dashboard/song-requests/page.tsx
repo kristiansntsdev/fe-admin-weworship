@@ -10,6 +10,8 @@ export interface SongRequest {
   user_id: number;
   song_title: string;
   reference_link: string;
+  lyrics_type: "lyrics" | "lyrics_chords";
+  lyrics: string;
   status: "pending" | "in_progress" | "approved" | "rejected";
   admin_notes: string | null;
   createdAt: string;
