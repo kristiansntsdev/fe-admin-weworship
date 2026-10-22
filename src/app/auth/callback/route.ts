@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
 const AUTH_COOKIE = "session_token";
+// Set by /prototype/auth/google so Google sign-in returns to the prototype instead of the dashboard
+const POST_AUTH_REDIRECT_COOKIE = "post_auth_redirect";
 const MOBILE_SCHEME = process.env.MOBILE_APP_SCHEME ?? "weworship";
 
 // Go redirects here after successful Google OAuth:
@@ -30,6 +32,12 @@ export async function GET(req: NextRequest) {
     maxAge: 60 * 60 * 24 * 30, // 30 days
     path: "/",
   });
+
+  const postAuthRedirect = cookieStore.get(POST_AUTH_REDIRECT_COOKIE)?.value;
+  if (postAuthRedirect?.startsWith("/prototype")) {
+    cookieStore.delete(POST_AUTH_REDIRECT_COOKIE);
+    return NextResponse.redirect(`${origin}${postAuthRedirect}`);
+  }
 
   return NextResponse.redirect(`${origin}/dashboard/default`);
 }

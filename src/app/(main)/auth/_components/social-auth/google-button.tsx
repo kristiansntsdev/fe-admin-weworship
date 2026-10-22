@@ -9,13 +9,15 @@ import { cn } from "@/lib/utils";
 export function GoogleButton({
   className,
   variant = "secondary",
+  href = "/api/auth/google?client=web",
 }: {
   className?: string;
   variant?: React.ComponentProps<typeof Button>["variant"];
+  href?: string;
 }) {
   return (
     <Button variant={variant} className={cn(className)} asChild>
-      <a href="/api/auth/google?client=web">
+      <a href={href}>
         <SimpleIcon icon={siGoogle} className="size-4" />
         Continue with Google
       </a>
