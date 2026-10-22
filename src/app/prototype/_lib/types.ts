@@ -38,6 +38,26 @@ export interface Song {
   updatedAt: string;
 }
 
+export type SongSort = "relevance" | "title-asc" | "title-desc" | "key-asc" | "key-desc";
+
+export interface SongQuery {
+  search: string;
+  sort?: SongSort;
+  keys?: string[];
+  artists?: string[];
+}
+
+export interface Artist {
+  id: string;
+  name: string;
+  count: number;
+}
+
+export interface SongKeyCount {
+  key: string;
+  count: number;
+}
+
 export type PlaylistAccess = "owner" | "leader" | "co-lead" | "member";
 
 export interface PlaylistSummary {

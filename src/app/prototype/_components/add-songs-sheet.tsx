@@ -42,7 +42,10 @@ export function AddSongsSheet({
   const search = useDebouncedValue(query, 300);
   const [selected, setSelected] = useState<number[]>([]);
 
-  const { songs, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useSongSearch(search, open);
+  const { songs, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useSongSearch(
+    { search, sort: search.trim() ? "relevance" : "title-asc" },
+    open,
+  );
 
   function toggle(id: number) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));

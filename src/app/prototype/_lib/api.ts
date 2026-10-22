@@ -1,4 +1,4 @@
-import type { ApiEnvelope } from "./types";
+import type { ApiEnvelope, SongQuery } from "./types";
 
 export class ApiError extends Error {
   constructor(
@@ -43,7 +43,16 @@ export function errorMessage(err: unknown): string {
 
 export const qk = {
   me: ["me"] as const,
-  songs: (search: string) => ["songs", search] as const,
+  songs: (q: SongQuery) =>
+    [
+      "songs",
+      q.search.trim(),
+      q.sort ?? "title-asc",
+      [...(q.keys ?? [])].sort(),
+      [...(q.artists ?? [])].sort(),
+    ] as const,
+  songKeys: ["song-keys"] as const,
+  artists: ["artists"] as const,
   song: (id: number) => ["song", id] as const,
   playlists: ["playlists"] as const,
   playlist: (id: number) => ["playlist", id] as const,

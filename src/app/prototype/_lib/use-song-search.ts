@@ -1,15 +1,18 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
 import { qk } from "./api";
 import { searchSongs } from "./songs";
+import type { SongQuery } from "./types";
 
 // Shared by the Songs tab and the "Add songs" sheet so both reuse the same cached pages.
-export function useSongSearch(search: string, enabled = true) {
+// keepPreviousData: changing a filter or sort keeps the current list on screen until the new one arrives.
+export function useSongSearch(q: SongQuery, enabled = true) {
   const query = useInfiniteQuery({
-    queryKey: qk.songs(search.trim()),
-    queryFn: ({ pageParam }) => searchSongs({ search, page: pageParam }),
+    queryKey: qk.songs(q),
+    queryFn: ({ pageParam }) => searchSongs({ ...q, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.pagination?.hasNextPage ? last.pagination.currentPage + 1 : undefined),
+    placeholderData: keepPreviousData,
     enabled,
   });
 
