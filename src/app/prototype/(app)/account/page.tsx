@@ -1,20 +1,35 @@
 "use client";
 
+import { useState } from "react";
+
 import Link from "next/link";
 
-import { useQuery } from "@tanstack/react-query";
-import { LayoutDashboard, LogOut } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AtSign, ChevronRight, LayoutDashboard, LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { PageHeader } from "../../_components/page-header";
+import { UsernameDialog } from "../../_components/username-dialog";
 import { errorMessage, qk } from "../../_lib/api";
+import { prototypeChangeUsername } from "../../_lib/auth-actions";
 import { getMe } from "../../_lib/songs";
+import type { Me } from "../../_lib/types";
 
 export default function AccountPage() {
+  const queryClient = useQueryClient();
+  const [renaming, setRenaming] = useState(false);
   const { data: me, isPending, isError, error } = useQuery({ queryKey: qk.me, queryFn: getMe });
+
+  async function changeUsername(username: string) {
+    const result = await prototypeChangeUsername(username);
+    if ("error" in result) throw new Error(result.error);
+    queryClient.setQueryData<Me>(qk.me, (prev) => (prev ? { ...prev, username: result.username } : prev));
+    toast.success("Username updated");
+  }
 
   return (
     <>
@@ -44,6 +59,28 @@ export default function AccountPage() {
           </div>
         )}
 
+        {me && (
+          <section className="space-y-2">
+            <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Settings</h2>
+            <ul className="divide-y rounded-lg border">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setRenaming(true)}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                >
+                  <AtSign className="size-5 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">Username</span>
+                    <span className="block truncate text-muted-foreground text-sm">{me.username}</span>
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </button>
+              </li>
+            </ul>
+          </section>
+        )}
+
         <div className="flex flex-col gap-2">
           {me && me.role !== "user" && (
             <Button variant="outline" asChild>
@@ -66,6 +103,10 @@ export default function AccountPage() {
           Tip: add WeWorship to your home screen from your browser's share or install menu.
         </p>
       </div>
+
+      {renaming && me && (
+        <UsernameDialog initialUsername={me.username} onSubmit={changeUsername} onClose={() => setRenaming(false)} />
+      )}
     </>
   );
 }
