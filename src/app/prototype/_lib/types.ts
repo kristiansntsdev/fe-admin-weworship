@@ -38,12 +38,23 @@ export interface Song {
   updatedAt: string;
 }
 
-// GET /home — public catalog overview. weekly_share_count = joins via share link since Monday.
+/** Song ranked by views or playlist adds — included on GET /home. */
+export interface RankedSong {
+  id: number;
+  title: string;
+  artist: string | null;
+  key: string | null;
+  count: number;
+}
+
+// GET /home — public catalog overview + rankings from song_events.
 export interface HomeStats {
   song_count: number;
   artist_count: number;
   shareable_playlist_count: number;
   weekly_share_count: number;
+  popular_songs?: RankedSong[];
+  most_added_songs?: RankedSong[];
 }
 
 export type SongSort = "relevance" | "title-asc" | "title-desc" | "key-asc" | "key-desc";

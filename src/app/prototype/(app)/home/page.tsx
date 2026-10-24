@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { PageHeader } from "../../_components/page-header";
-import { MostAddedSongs, SampleBadge, TrendingSongs } from "../../_components/song-rankings";
+import { MostAddedSongs, TrendingSongs } from "../../_components/song-rankings";
 import { qk } from "../../_lib/api";
-import { getHomeStats, MOST_ADDED_SONGS, POPULAR_SONGS } from "../../_lib/home";
+import { getHomeStats } from "../../_lib/home";
 import { getMe } from "../../_lib/songs";
 
 export default function AppHomePage() {
@@ -55,25 +55,19 @@ export default function AppHomePage() {
         </div>
 
         <div>
-          <div className="flex items-end justify-between gap-3 pb-3">
-            <div>
-              <p className="font-semibold text-primary text-xs uppercase tracking-wider">Trending</p>
-              <h3 className="font-semibold text-lg tracking-tight">Most popular</h3>
-            </div>
-            <SampleBadge />
+          <div className="pb-3">
+            <p className="font-semibold text-primary text-xs uppercase tracking-wider">Trending</p>
+            <h3 className="font-semibold text-lg tracking-tight">Most popular this week</h3>
           </div>
-          <TrendingSongs songs={POPULAR_SONGS} />
+          <TrendingSongs songs={stats?.popular_songs ?? []} />
         </div>
 
         <div>
-          <div className="flex items-end justify-between gap-3 pb-3">
-            <div>
-              <p className="font-semibold text-primary text-xs uppercase tracking-wider">Setlists</p>
-              <h3 className="font-semibold text-lg tracking-tight">Most added</h3>
-            </div>
-            <SampleBadge />
+          <div className="pb-3">
+            <p className="font-semibold text-primary text-xs uppercase tracking-wider">Setlists</p>
+            <h3 className="font-semibold text-lg tracking-tight">Most added to playlists</h3>
           </div>
-          <MostAddedSongs songs={MOST_ADDED_SONGS} />
+          <MostAddedSongs songs={stats?.most_added_songs ?? []} />
         </div>
       </div>
     </>

@@ -14,9 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 import { qk } from "../_lib/api";
-import { getHomeStats, MOST_ADDED_SONGS, POPULAR_SONGS } from "../_lib/home";
+import { getHomeStats } from "../_lib/home";
 import { getMe } from "../_lib/songs";
-import { MostAddedSongs, SampleBadge, TrendingSongs } from "./song-rankings";
+import { MostAddedSongs, TrendingSongs } from "./song-rankings";
 import { TransposeDemo } from "./transpose-demo";
 
 // Faint chord symbols behind the hero headline.
@@ -185,13 +185,13 @@ export function HomeView({ signedIn }: { signedIn: boolean }) {
       </Reveal>
 
       <Reveal className="px-4 pt-10">
-        <SectionHeading eyebrow="Trending" title="Most popular this week" aside={<SampleBadge />} />
-        <TrendingSongs songs={POPULAR_SONGS} />
+        <SectionHeading eyebrow="Trending" title="Most popular this week" />
+        <TrendingSongs songs={stats?.popular_songs ?? []} />
       </Reveal>
 
       <Reveal className="px-4 pt-8">
-        <SectionHeading eyebrow="Setlist favourites" title="Most added to playlists" aside={<SampleBadge />} />
-        <MostAddedSongs songs={MOST_ADDED_SONGS} />
+        <SectionHeading eyebrow="Setlist favourites" title="Most added to playlists" />
+        <MostAddedSongs songs={stats?.most_added_songs ?? []} />
       </Reveal>
 
       <Reveal className="px-4 pt-10">

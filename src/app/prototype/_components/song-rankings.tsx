@@ -2,10 +2,9 @@ import Link from "next/link";
 
 import { Music } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-import type { RankedSong } from "../_lib/home";
+import type { RankedSong } from "../_lib/types";
 
 const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
 
@@ -18,15 +17,10 @@ const COVERS = [
   "from-emerald-500 to-teal-900",
 ];
 
-export function SampleBadge() {
-  return (
-    <Badge variant="outline" className="text-[10px] text-muted-foreground">
-      Sample data
-    </Badge>
-  );
-}
-
 export function TrendingSongs({ songs }: { songs: RankedSong[] }) {
+  if (songs.length === 0) {
+    return <p className="text-muted-foreground text-sm">No song views yet this week.</p>;
+  }
   // -mx-4 bleeds the scroll track to the screen edge. Padding on overflow-x flex is ignored in
   // WebKit, so inset comes from first/last item margins instead of px-4 on the list.
   return (
@@ -66,6 +60,9 @@ export function TrendingSongs({ songs }: { songs: RankedSong[] }) {
 }
 
 export function MostAddedSongs({ songs }: { songs: RankedSong[] }) {
+  if (songs.length === 0) {
+    return <p className="text-muted-foreground text-sm">No playlist adds yet — add a song to a setlist to get started.</p>;
+  }
   const max = Math.max(1, ...songs.map((s) => s.count));
 
   return (
