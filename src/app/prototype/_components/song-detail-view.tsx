@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
 
 import { keyRoot } from "../_lib/chordpro";
 import { artistLabel } from "../_lib/songs";
 import type { Song } from "../_lib/types";
 import { KeyPicker } from "./key-picker";
 import { Lyrics } from "./lyrics";
+import { LyricsChordSwitcher } from "./lyrics-chord-switcher";
 
 export function SongDetailView({
   song,
@@ -74,17 +74,9 @@ export function SongDetailView({
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <p className="font-medium text-sm">{currentKey ? `Key of ${currentKey}` : "Key unknown"}</p>
-          <Toggle
-            variant="outline"
-            size="sm"
-            pressed={showChords}
-            onPressedChange={onShowChordsChange}
-            aria-label="Show chords"
-          >
-            Chords
-          </Toggle>
+          <LyricsChordSwitcher showChords={showChords} onShowChordsChange={onShowChordsChange} />
         </div>
         {currentKey && <KeyPicker value={currentKey} onChange={setPickedKey} originalKey={originalKey} />}
       </div>

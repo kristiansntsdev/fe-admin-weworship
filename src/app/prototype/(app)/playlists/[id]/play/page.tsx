@@ -10,8 +10,8 @@ import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Toggle } from "@/components/ui/toggle";
 
+import { LyricsChordSwitcher } from "../../../../_components/lyrics-chord-switcher";
 import { PageHeader } from "../../../../_components/page-header";
 import { SongDetailView } from "../../../../_components/song-detail-view";
 import { errorMessage, qk } from "../../../../_lib/api";
@@ -114,28 +114,31 @@ export default function PlaylistPlayPage({
         backHref={backHref}
         actions={
           songIds.length > 0 ? (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={index <= 0}
-                onClick={() => goTo(index - 1)}
-                aria-label="Previous song"
-              >
-                <ChevronLeft />
-              </Button>
-              <span className="min-w-12 text-center text-muted-foreground text-sm tabular-nums">
-                {index + 1}/{songIds.length}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={index >= songIds.length - 1}
-                onClick={() => goTo(index + 1)}
-                aria-label="Next song"
-              >
-                <ChevronRight />
-              </Button>
+            <div className="flex items-center gap-2 pr-1">
+              <div className="flex items-center gap-0.5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={index <= 0}
+                  onClick={() => goTo(index - 1)}
+                  aria-label="Previous song"
+                >
+                  <ChevronLeft />
+                </Button>
+                <span className="min-w-10 text-center text-muted-foreground text-xs tabular-nums">
+                  {index + 1}/{songIds.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={index >= songIds.length - 1}
+                  onClick={() => goTo(index + 1)}
+                  aria-label="Next song"
+                >
+                  <ChevronRight />
+                </Button>
+              </div>
+              <LyricsChordSwitcher showChords={showChords} onShowChordsChange={setShowChords} />
             </div>
           ) : undefined
         }
@@ -214,15 +217,6 @@ export default function PlaylistPlayPage({
 
       {songIds.length > 0 && (
         <div className="pointer-events-none fixed right-4 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] z-50 flex flex-col items-end gap-2">
-          <Toggle
-            variant="outline"
-            pressed={showChords}
-            onPressedChange={setShowChords}
-            aria-label="Show chords"
-            className="pointer-events-auto bg-background/95 shadow-lg backdrop-blur"
-          >
-            Chords
-          </Toggle>
           <Button
             type="button"
             size="icon"

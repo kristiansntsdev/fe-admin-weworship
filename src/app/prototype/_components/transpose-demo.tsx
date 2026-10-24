@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 
-import { Toggle } from "@/components/ui/toggle";
-
 import { DEMO_SONG } from "../_lib/home";
 import { KeyPicker } from "./key-picker";
 import { Lyrics } from "./lyrics";
+import { LyricsChordSwitcher } from "./lyrics-chord-switcher";
 
 // The real song view parts (KeyPicker + Lyrics) on a fixed song, so visitors can try transposing before signing up.
 export function TransposeDemo() {
@@ -21,16 +20,7 @@ export function TransposeDemo() {
           <h2 className="truncate font-semibold text-lg">{DEMO_SONG.title}</h2>
           <p className="text-muted-foreground text-sm">{DEMO_SONG.credit}</p>
         </div>
-        <Toggle
-          variant="outline"
-          size="sm"
-          pressed={showChords}
-          onPressedChange={setShowChords}
-          aria-label="Show chords"
-          className="shrink-0"
-        >
-          Chords
-        </Toggle>
+        <LyricsChordSwitcher showChords={showChords} onShowChordsChange={setShowChords} />
       </div>
       <div className="space-y-1.5">
         <p className="text-muted-foreground text-xs">Tap a key — every chord follows.</p>
