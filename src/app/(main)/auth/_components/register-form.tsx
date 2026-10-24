@@ -13,7 +13,13 @@ import { register } from "@/server/auth-actions";
 
 const FormSchema = z
   .object({
-    name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+    username: z
+      .string()
+      .min(6, { message: "Username must be at least 6 characters." })
+      .max(30, { message: "Username must be at most 30 characters." })
+      .regex(/^[A-Za-z0-9._-]+$/, {
+        message: "Username can only contain letters, numbers, dots, underscores, and hyphens.",
+      }),
     email: z.string().email({ message: "Please enter a valid email address." }),
     password: z.string().min(6, { message: "Password must be at least 6 characters." }),
     confirmPassword: z.string().min(6, { message: "Confirm Password must be at least 6 characters." }),
@@ -29,7 +35,7 @@ export function RegisterForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      name: "",
+      username: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -38,7 +44,7 @@ export function RegisterForm() {
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     setServerError(null);
-    const result = await register(data.name, data.email, data.password);
+    const result = await register(data.username, data.email, data.password);
     if (result?.error) {
       setServerError(result.error);
     }
@@ -49,12 +55,12 @@ export function RegisterForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="name"
+          name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input id="name" type="text" placeholder="Your name" autoComplete="name" {...field} />
+                <Input id="username" type="text" placeholder="your_username" autoComplete="username" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

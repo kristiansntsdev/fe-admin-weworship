@@ -47,13 +47,13 @@ export async function login(
   redirect(redirectTo);
 }
 
-export async function register(name: string, email: string, password: string): Promise<{ error: string } | void> {
+export async function register(username: string, email: string, password: string): Promise<{ error: string } | void> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ username, email, password }),
     });
   } catch {
     return { error: "Could not reach the server. Please try again." };

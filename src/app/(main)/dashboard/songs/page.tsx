@@ -48,6 +48,15 @@ async function fetchSongs(page = 1, limit = 20, search = "", hasLink?: string, c
   }
 }
 
+async function fetchSearchHistory() {
+  try {
+    const res = await api.get<string[]>("/api/songs/search-history?limit=8");
+    return res.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function SongsPage({
   searchParams,
 }: {
@@ -59,7 +68,10 @@ export default async function SongsPage({
   const sortBy = params.sortBy ?? "createdAt";
   const sortOrder = params.sortOrder ?? "DESC";
   const baseChord = params.base_chord ?? "";
-  const { songs, total, limit } = await fetchSongs(page, 20, search, params.has_link, params.chordpro, sortBy, sortOrder, baseChord);
+  const [{ songs, total, limit }, recentSearches] = await Promise.all([
+    fetchSongs(page, 20, search, params.has_link, params.chordpro, sortBy, sortOrder, baseChord),
+    fetchSearchHistory(),
+  ]);
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
@@ -67,7 +79,7 @@ export default async function SongsPage({
         <h1 className="text-2xl font-bold">Songs</h1>
         <p className="text-muted-foreground text-sm">Manage the song library</p>
       </div>
-      <SongsClient songs={songs} total={total} limit={limit} currentPage={page} currentSearch={search} currentHasLink={params.has_link ?? "all"} currentChordPro={params.chordpro ?? "all"} currentSortBy={sortBy} currentSortOrder={sortOrder} currentBaseChord={baseChord} />
+      <SongsClient songs={songs} total={total} limit={limit} currentPage={page} currentSearch={search} currentHasLink={params.has_link ?? "all"} currentChordPro={params.chordpro ?? "all"} currentSortBy={sortBy} currentSortOrder={sortOrder} currentBaseChord={baseChord} recentSearches={recentSearches} />
     </div>
   );
 }

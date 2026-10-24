@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Music, Plus, X } from "lucide-react";
+import { ArrowUpDown, Music, Play, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -89,7 +89,7 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
 
   const isOwner = playlist?.access_type === "owner";
   const removeSongTitle = removeId !== null ? songsById.get(removeId)?.title : undefined;
-  const fromParam = encodeURIComponent(`/prototype/playlists/${playlistId}`);
+  const playHref = `/prototype/playlists/${playlistId}/play`;
 
   return (
     <>
@@ -138,6 +138,19 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
               </div>
             ) : (
               <div className="flex gap-2">
+                {songIds.length > 0 ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={playHref}>
+                      <Play />
+                      Play
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" disabled>
+                    <Play />
+                    Play
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -193,7 +206,7 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
                 const song = songsById.get(sid);
                 const failed = songQueries[i]?.isError;
                 const key = keyFor(sid);
-                const href = `/prototype/songs/${sid}?${key ? `key=${encodeURIComponent(key)}&` : ""}from=${fromParam}`;
+                const href = `${playHref}?i=${i}`;
                 return (
                   <li key={sid} className="flex items-center gap-1 pr-2">
                     <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 py-3 pl-4">

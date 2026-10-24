@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Plus, Search, X } from "lucide-react";
+import { Clock, Plus, Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,12 +25,14 @@ interface Props {
   currentSortBy: string;
   currentSortOrder: string;
   currentBaseChord: string;
+  recentSearches: string[];
 }
 
-export function SongsClient({ songs, total, limit, currentPage, currentSearch, currentHasLink, currentChordPro, currentSortBy, currentSortOrder, currentBaseChord }: Props) {
+export function SongsClient({ songs, total, limit, currentPage, currentSearch, currentHasLink, currentChordPro, currentSortBy, currentSortOrder, currentBaseChord, recentSearches }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState(currentSearch);
   const [deleteSong, setDeleteSong] = useState<Song | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   function buildParams(overrides: Record<string, string>) {
     const p = new URLSearchParams();
@@ -47,7 +49,14 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch, c
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
+    setHistoryOpen(false);
     router.push(`/dashboard/songs?${buildParams({ search, page: "1" })}`);
+  }
+
+  function applyRecentSearch(query: string) {
+    setSearch(query);
+    setHistoryOpen(false);
+    router.push(`/dashboard/songs?${buildParams({ search: query, page: "1" })}`);
   }
 
   function handlePage(page: number) {
@@ -59,6 +68,8 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch, c
     router.push(`/dashboard/songs?${buildParams({ sortBy: col, sortOrder: newOrder, page: "1" })}`);
   }
 
+  const showHistory = historyOpen && recentSearches.length > 0 && !search.trim();
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -69,7 +80,13 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch, c
                 placeholder="Search title, artist, or lyrics..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setHistoryOpen(true)}
+                onBlur={() => {
+                  // Delay so recent-search clicks register before the menu closes.
+                  window.setTimeout(() => setHistoryOpen(false), 150);
+                }}
                 className="w-52 pr-8"
+                autoComplete="off"
               />
               {search && (
                 <button
@@ -79,6 +96,23 @@ export function SongsClient({ songs, total, limit, currentPage, currentSearch, c
                 >
                   <X className="size-4" />
                 </button>
+              )}
+              {showHistory && (
+                <div className="bg-popover text-popover-foreground absolute top-full left-0 z-50 mt-1 w-64 rounded-md border py-1 shadow-md">
+                  <p className="text-muted-foreground px-3 py-1.5 text-xs font-medium">Recent searches</p>
+                  {recentSearches.map((query) => (
+                    <button
+                      key={query}
+                      type="button"
+                      className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyRecentSearch(query)}
+                    >
+                      <Clock className="text-muted-foreground size-3.5 shrink-0" />
+                      <span className="truncate">{query}</span>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
             <Button type="submit" variant="outline" size="icon">
