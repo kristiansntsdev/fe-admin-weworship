@@ -1,8 +1,9 @@
 import { protoFetch } from "./api";
 import type { Song } from "./types";
 
-export async function getSearchHistory(limit = 30) {
-  return (await protoFetch<string[]>(`/songs/search-history?limit=${limit}`)).data ?? [];
+/** Songs the user opened (clicked), newest first — not keystroke search queries. */
+export async function getViewHistory(limit = 40) {
+  return (await protoFetch<Song[]>(`/songs/view-history?limit=${limit}`)).data ?? [];
 }
 
 export async function listFavorites() {

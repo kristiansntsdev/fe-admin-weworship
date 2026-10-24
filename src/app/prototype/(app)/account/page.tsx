@@ -68,7 +68,7 @@ export default function AccountPage() {
                   <History className="size-5 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">Search history</span>
-                    <span className="block text-muted-foreground text-sm">Recent song searches</span>
+                    <span className="block text-muted-foreground text-sm">Lagu yang baru kamu buka</span>
                   </span>
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </Link>

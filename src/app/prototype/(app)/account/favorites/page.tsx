@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "../../../_components/page-header";
 import { SongRow } from "../../../_components/song-row";
 import { listFavorites, toggleFavorite } from "../../../_lib/activity";
-import { errorMessage, qk } from "../../../_lib/api";
+import { ApiError, errorMessage, qk } from "../../../_lib/api";
 import type { Song } from "../../../_lib/types";
 
 export default function FavoritesPage() {
@@ -32,6 +32,11 @@ export default function FavoritesPage() {
     onError: (err) => toast.error(errorMessage(err)),
   });
 
+  // Proxy used to 404 /favorites; treat that (and empty) as Favorit Kosong.
+  const empty =
+    !isPending &&
+    (!data?.length || (isError && error instanceof ApiError && (error.status === 404 || error.status === 0)));
+
   return (
     <>
       <PageHeader title="Favorites" backHref="/prototype/account" />
@@ -42,23 +47,23 @@ export default function FavoritesPage() {
           <Skeleton className="h-14 w-full" />
           <Skeleton className="h-14 w-full" />
         </div>
-      ) : isError ? (
-        <p className="p-4 text-destructive text-sm">{errorMessage(error)}</p>
-      ) : !data?.length ? (
+      ) : empty ? (
         <Empty className="py-16">
           <EmptyHeader>
-            <EmptyTitle>No favorites yet</EmptyTitle>
+            <EmptyTitle>Favorit Kosong</EmptyTitle>
             <EmptyDescription>
-              Tap the star on a song to save it here.{" "}
+              Ketuk bintang di halaman lagu untuk menyimpan di sini.{" "}
               <Link href="/prototype/songs" className="font-medium text-primary hover:underline">
-                Find songs
+                Cari lagu
               </Link>
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
+      ) : isError ? (
+        <p className="p-4 text-destructive text-sm">{errorMessage(error)}</p>
       ) : (
         <ul className="divide-y">
-          {data.map((song) => (
+          {data!.map((song) => (
             <SongRow
               key={song.id}
               song={song}
