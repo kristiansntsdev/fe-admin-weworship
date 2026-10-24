@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface TopSong {
-  song_id: number;
-  title: string;
-  artist: string;
-  play_count: number;
+  song_id?: number;
+  title?: string;
+  artist?: string;
+  play_count?: number;
 }
 
 const chartConfig = {
@@ -17,10 +17,13 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function TopSongsChart({ songs }: { songs: TopSong[] }) {
-  const data = songs.map((s) => ({
-    name: s.title.length > 20 ? s.title.slice(0, 18) + "…" : s.title,
-    play_count: s.play_count,
-  }));
+  const data = songs.map((s) => {
+    const title = s.title || "Untitled";
+    return {
+      name: title.length > 20 ? title.slice(0, 18) + "…" : title,
+      play_count: s.play_count ?? 0,
+    };
+  });
 
   return (
     <Card>

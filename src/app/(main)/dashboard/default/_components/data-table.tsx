@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface TopSong {
-  song_id: number;
-  title: string;
-  play_count: number;
+  song_id?: number;
+  title?: string;
+  play_count?: number;
 }
 
 export function DataTable({ data }: { data: TopSong[] }) {
@@ -34,10 +34,12 @@ export function DataTable({ data }: { data: TopSong[] }) {
             </TableHeader>
             <TableBody>
               {data.map((song, index) => (
-                <TableRow key={song.song_id}>
+                <TableRow key={song.song_id ?? index}>
                   <TableCell className="text-muted-foreground">{index + 1}</TableCell>
-                  <TableCell className="font-medium">{song.title}</TableCell>
-                  <TableCell className="text-right tabular-nums">{song.play_count.toLocaleString()}</TableCell>
+                  <TableCell className="font-medium">{song.title || "Untitled"}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {(song.play_count ?? 0).toLocaleString()}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

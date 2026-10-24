@@ -6,7 +6,10 @@ import { cn } from "@/lib/utils";
 
 import type { RankedSong } from "../_lib/types";
 
-const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
+const plural = (n: number | undefined, word: string) => {
+  const count = n ?? 0;
+  return `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`;
+};
 
 // Decorative cover art, picked by position so neighbouring cards never share a colour.
 const COVERS = [
