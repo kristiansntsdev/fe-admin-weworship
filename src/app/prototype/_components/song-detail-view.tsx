@@ -41,13 +41,7 @@ export function SongDetailView({
 
   if (variant === "play") {
     return (
-      <div className="space-y-4 p-4 pb-24">
-        <div className="flex items-center justify-end gap-2">
-          <Switch id={`show-chords-play-${song.id}`} checked={showChords} onCheckedChange={onShowChordsChange} />
-          <Label htmlFor={`show-chords-play-${song.id}`} className="text-sm">
-            Chords
-          </Label>
-        </div>
+      <div className="p-4 pb-28">
         <Lyrics
           source={song.lyrics_and_chords ?? ""}
           fromKey={originalKey}
