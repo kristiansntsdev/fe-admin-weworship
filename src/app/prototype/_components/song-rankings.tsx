@@ -27,10 +27,19 @@ export function SampleBadge() {
 }
 
 export function TrendingSongs({ songs }: { songs: RankedSong[] }) {
+  // -mx-4 bleeds the scroll track to the screen edge. Padding on overflow-x flex is ignored in
+  // WebKit, so inset comes from first/last item margins instead of px-4 on the list.
   return (
-    <ol className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
+    <ol className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {songs.map((s, i) => (
-        <li key={s.id} className="w-36 shrink-0 snap-start">
+        <li
+          key={s.id}
+          className={cn(
+            "w-36 shrink-0 snap-start",
+            i === 0 && "ml-4",
+            i === songs.length - 1 && "mr-4",
+          )}
+        >
           <Link href={`/prototype/songs/${s.id}`} className="block space-y-2">
             <div
               className={cn(
