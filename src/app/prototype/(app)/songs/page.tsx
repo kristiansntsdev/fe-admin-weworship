@@ -53,10 +53,8 @@ export default function SongsPage() {
       <PageHeader
         title="Songs"
         actions={
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/prototype/requests" aria-label="Song requests">
-              <MessageSquarePlus />
-            </Link>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/prototype/requests">Requests</Link>
           </Button>
         }
       >
