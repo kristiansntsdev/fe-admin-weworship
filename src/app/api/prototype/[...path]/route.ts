@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
-const AUTH_COOKIE = "session_token";
+import { PROTOTYPE_SESSION_COOKIE } from "@/lib/session-cookies";
+
 const BE = process.env.NEXT_PUBLIC_GO_URL ?? process.env.GO_DEV_URL ?? "http://localhost:3001";
 
 // Only the end-user endpoints the /prototype PWA needs are forwarded.
@@ -20,7 +21,7 @@ async function proxy(req: NextRequest, { params }: Params) {
   }
 
   const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE)?.value;
+  const token = cookieStore.get(PROTOTYPE_SESSION_COOKIE)?.value;
 
   // Raw search string keeps %20 encoding — the Go search splits on spaces, not "+".
   const search = new URL(req.url).search;

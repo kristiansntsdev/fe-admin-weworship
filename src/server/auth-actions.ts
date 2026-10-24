@@ -3,7 +3,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const AUTH_COOKIE = "session_token";
+import {
+  ADMIN_SESSION_COOKIE,
+  LEGACY_SESSION_COOKIE,
+  sessionCookieOptions,
+} from "@/lib/session-cookies";
+
 // Server actions call the BE directly (bypasses Next.js rewrites which are browser-only).
 const API_URL = process.env.NEXT_PUBLIC_GO_URL ?? process.env.GO_DEV_URL ?? "http://localhost:3001";
 
@@ -11,6 +16,7 @@ export async function login(
   email: string,
   password: string,
   redirectTo = "/dashboard/default",
+  cookieName: string = ADMIN_SESSION_COOKIE,
 ): Promise<{ error: string }> {
   let res: Response;
 
@@ -36,13 +42,8 @@ export async function login(
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(AUTH_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-    path: "/",
-  });
+  cookieStore.set(cookieName, token, sessionCookieOptions());
+  cookieStore.delete(LEGACY_SESSION_COOKIE);
 
   redirect(redirectTo);
 }
@@ -72,6 +73,7 @@ export async function register(username: string, email: string, password: string
 
 export async function logout(): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.delete(AUTH_COOKIE);
+  cookieStore.delete(ADMIN_SESSION_COOKIE);
+  cookieStore.delete(LEGACY_SESSION_COOKIE);
   redirect("/auth/v2/login");
 }

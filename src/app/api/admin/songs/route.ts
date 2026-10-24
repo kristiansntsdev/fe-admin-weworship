@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-const AUTH_COOKIE = "session_token";
+import { ADMIN_SESSION_COOKIE } from "@/lib/session-cookies";
+
 const BE = process.env.NEXT_PUBLIC_GO_URL ?? process.env.GO_DEV_URL ?? "http://localhost:3001";
 
 async function proxy(req: NextRequest, method: string, id?: string) {
   const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE)?.value;
+  const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
 
   const path = id ? `/api/admin/songs/${id}` : "/api/admin/songs";
   const body = method !== "DELETE" ? await req.text() : undefined;

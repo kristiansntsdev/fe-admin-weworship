@@ -2,9 +2,13 @@
 
 import { cookies } from "next/headers";
 
+import {
+  LEGACY_SESSION_COOKIE,
+  PROTOTYPE_SESSION_COOKIE,
+  sessionCookieOptions,
+} from "@/lib/session-cookies";
 import { login } from "@/server/auth-actions";
 
-const AUTH_COOKIE = "session_token";
 const API_URL = process.env.NEXT_PUBLIC_GO_URL ?? process.env.GO_DEV_URL ?? "http://localhost:3001";
 
 // Only allow returning to prototype pages — prevents open redirects through ?from=.
@@ -13,7 +17,7 @@ function safeRedirect(from: string | null | undefined): string {
 }
 
 export async function prototypeLogin(email: string, password: string, from?: string | null) {
-  return login(email, password, safeRedirect(from));
+  return login(email, password, safeRedirect(from), PROTOTYPE_SESSION_COOKIE);
 }
 
 export async function prototypeRegister(
@@ -39,14 +43,14 @@ export async function prototypeRegister(
   }
 
   // Register returns a token too, but logging in reuses the existing cookie + redirect handling.
-  return login(email, password, safeRedirect(from));
+  return login(email, password, safeRedirect(from), PROTOTYPE_SESSION_COOKIE);
 }
 
 // Not routed through the /api/prototype proxy: the BE returns a new token (the username lives in its claims)
 // and only a server action can write it back to the httpOnly cookie.
 export async function prototypeChangeUsername(username: string): Promise<{ username: string } | { error: string }> {
   const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE)?.value;
+  const token = cookieStore.get(PROTOTYPE_SESSION_COOKIE)?.value;
   if (!token) {
     return { error: "Your session has expired. Please log in again." };
   }
@@ -72,14 +76,8 @@ export async function prototypeChangeUsername(username: string): Promise<{ usern
     return { error: "Could not change your username. Please try again." };
   }
 
-  // Same options as login() in src/server/auth-actions.ts.
-  cookieStore.set(AUTH_COOKIE, newToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-    path: "/",
-  });
+  cookieStore.set(PROTOTYPE_SESSION_COOKIE, newToken, sessionCookieOptions());
+  cookieStore.delete(LEGACY_SESSION_COOKIE);
 
   return { username: body.data.user.username };
 }

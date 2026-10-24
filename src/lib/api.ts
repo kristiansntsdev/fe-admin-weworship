@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-const AUTH_COOKIE = "session_token";
+import { ADMIN_SESSION_COOKIE } from "@/lib/session-cookies";
 
 // Server-side API base URL — must point directly to the Go backend.
 // NEXT_PUBLIC_GO_URL should be set to https://be-weworship.vercel.app on Vercel.
@@ -24,7 +24,7 @@ async function request<T>(
   init: RequestInit = {},
 ): Promise<T> {
   const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE)?.value;
+  const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

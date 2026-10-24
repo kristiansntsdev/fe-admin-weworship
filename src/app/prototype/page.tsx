@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 
+import { PROTOTYPE_SESSION_COOKIE } from "@/lib/session-cookies";
+
 import { HomeView } from "./_components/home-view";
 
 // Same test as proxy.ts: a decodable, unexpired token counts as signed in (the Go API verifies the signature).
@@ -19,7 +21,7 @@ export default async function PrototypeHome() {
   const cookieStore = await cookies();
   return (
     <main className="flex flex-1 flex-col pb-[calc(2rem+env(safe-area-inset-bottom))]">
-      <HomeView signedIn={hasLiveSession(cookieStore.get("session_token")?.value)} />
+      <HomeView signedIn={hasLiveSession(cookieStore.get(PROTOTYPE_SESSION_COOKIE)?.value)} />
     </main>
   );
 }

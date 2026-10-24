@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-const AUTH_COOKIE = "session_token";
+import { ADMIN_SESSION_COOKIE, PROTOTYPE_SESSION_COOKIE } from "@/lib/session-cookies";
 
 // Routes that only admins can access
 const ADMIN_ONLY_PATHS = ["/dashboard/analytics", "/dashboard/users"];
@@ -30,19 +30,25 @@ function isExpired(token: string): boolean {
   return typeof exp === "number" && exp * 1000 <= Date.now();
 }
 
-function redirectToLogin(req: NextRequest, pathname: string, clearSession = false, loginPath = "/auth/v2/login") {
+function redirectToLogin(
+  req: NextRequest,
+  pathname: string,
+  clearCookie?: string,
+  loginPath = "/auth/v2/login",
+) {
   const loginUrl = new URL(loginPath, req.url);
   loginUrl.searchParams.set("from", pathname);
   const response = NextResponse.redirect(loginUrl);
-  if (clearSession) {
-    response.cookies.delete(AUTH_COOKIE);
+  if (clearCookie) {
+    response.cookies.delete(clearCookie);
   }
   return response;
 }
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const sessionToken = req.cookies.get(AUTH_COOKIE)?.value;
+  const adminToken = req.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+  const prototypeToken = req.cookies.get(PROTOTYPE_SESSION_COOKIE)?.value;
 
   const isDashboard = pathname.startsWith("/dashboard");
   // /auth/callback must be reachable regardless of session state —
@@ -59,31 +65,36 @@ export function proxy(req: NextRequest) {
   // Protect prototype routes — any role may use the end-user app, but the token must be valid and unexpired
   // (the Go JWT expires long before the cookie does, so an expired token would otherwise loop on 401).
   if (isPrototype && !isPrototypePublic && !isPrototypeHome) {
-    if (!sessionToken) {
-      return redirectToLogin(req, pathname, false, "/prototype/login");
+    if (!prototypeToken) {
+      return redirectToLogin(req, pathname, undefined, "/prototype/login");
     }
-    if (!decodeRole(sessionToken) || isExpired(sessionToken)) {
-      return redirectToLogin(req, pathname, true, "/prototype/login");
+    if (!decodeRole(prototypeToken) || isExpired(prototypeToken)) {
+      return redirectToLogin(req, pathname, PROTOTYPE_SESSION_COOKIE, "/prototype/login");
     }
   }
 
   // Redirect authenticated users away from prototype login/register into the app home tab
-  if (isPrototypePublic && !pathname.startsWith("/prototype/auth") && sessionToken && !isExpired(sessionToken)) {
+  if (
+    isPrototypePublic &&
+    !pathname.startsWith("/prototype/auth") &&
+    prototypeToken &&
+    !isExpired(prototypeToken)
+  ) {
     return NextResponse.redirect(new URL("/prototype/home", req.url));
   }
 
   // Protect dashboard routes — redirect to login if no session
-  if (isDashboard && !sessionToken) {
+  if (isDashboard && !adminToken) {
     return redirectToLogin(req, pathname);
   }
 
   // Role-based access control for dashboard
-  if (isDashboard && sessionToken) {
-    const role = decodeRole(sessionToken);
+  if (isDashboard && adminToken) {
+    const role = decodeRole(adminToken);
 
     // Invalid token → redirect to login
     if (!role) {
-      return redirectToLogin(req, pathname, true);
+      return redirectToLogin(req, pathname, ADMIN_SESSION_COOKIE);
     }
 
     // Valid token but insufficient role (plain user) → unauthorized
@@ -98,7 +109,7 @@ export function proxy(req: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages to dashboard
-  if (isAuth && sessionToken) {
+  if (isAuth && adminToken) {
     return NextResponse.redirect(new URL("/dashboard/default", req.url));
   }
 

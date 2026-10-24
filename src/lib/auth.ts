@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-const AUTH_COOKIE = "session_token";
+import { ADMIN_SESSION_COOKIE } from "@/lib/session-cookies";
 
 export interface SessionUser {
   userId: number;
@@ -33,7 +33,7 @@ function decodeJwtPayload(token: string): SessionUser | null {
 
 export async function getSessionUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE)?.value;
+  const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
   if (!token) return null;
   return decodeJwtPayload(token);
 }

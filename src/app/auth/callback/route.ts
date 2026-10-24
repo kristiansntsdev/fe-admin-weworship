@@ -1,7 +1,13 @@
 import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
-const AUTH_COOKIE = "session_token";
+import {
+  ADMIN_SESSION_COOKIE,
+  LEGACY_SESSION_COOKIE,
+  PROTOTYPE_SESSION_COOKIE,
+  sessionCookieOptions,
+} from "@/lib/session-cookies";
+
 // Set by /prototype/auth/google so Google sign-in returns to the prototype instead of the dashboard
 const POST_AUTH_REDIRECT_COOKIE = "post_auth_redirect";
 const MOBILE_SCHEME = process.env.MOBILE_APP_SCHEME ?? "weworship";
@@ -9,7 +15,7 @@ const MOBILE_SCHEME = process.env.MOBILE_APP_SCHEME ?? "weworship";
 // Go redirects here after successful Google OAuth:
 //   GET /auth/callback?token=<JWT>
 //   GET /auth/callback?token=<JWT>&client=mobile  (from mobile deep link fallback)
-// We store the JWT in an httpOnly cookie and redirect to the dashboard.
+// We store the JWT in an httpOnly cookie and redirect to the dashboard or prototype.
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = req.nextUrl;
   const token = searchParams.get("token");
@@ -25,16 +31,17 @@ export async function GET(req: NextRequest) {
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(AUTH_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-    path: "/",
-  });
-
   const postAuthRedirect = cookieStore.get(POST_AUTH_REDIRECT_COOKIE)?.value;
-  if (postAuthRedirect?.startsWith("/prototype")) {
+  const isPrototype = !!postAuthRedirect?.startsWith("/prototype");
+
+  cookieStore.set(
+    isPrototype ? PROTOTYPE_SESSION_COOKIE : ADMIN_SESSION_COOKIE,
+    token,
+    sessionCookieOptions(),
+  );
+  cookieStore.delete(LEGACY_SESSION_COOKIE);
+
+  if (isPrototype) {
     cookieStore.delete(POST_AUTH_REDIRECT_COOKIE);
     return NextResponse.redirect(`${origin}${postAuthRedirect}`);
   }
