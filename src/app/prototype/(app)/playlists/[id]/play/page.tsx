@@ -5,7 +5,7 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
@@ -14,9 +14,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "../../../../_components/page-header";
 import { SongDetailView } from "../../../../_components/song-detail-view";
 import { errorMessage, qk } from "../../../../_lib/api";
+import { KEYS, keyRoot } from "../../../../_lib/chordpro";
 import { getPlaylist } from "../../../../_lib/playlists";
 import { getSong } from "../../../../_lib/songs";
 import type { Song } from "../../../../_lib/types";
+
+/** Shift a key root by N semitones. */
+function shiftKey(key: string | null | undefined, semitones: number): string | null {
+  const root = keyRoot(key);
+  if (!root) return null;
+  const i = KEYS.indexOf(root);
+  return KEYS[((i + semitones) % 12 + 12) % 12];
+}
 
 export default function PlaylistPlayPage({
   params,
@@ -50,6 +59,7 @@ export default function PlaylistPlayPage({
   const pageRefs = useRef<(HTMLElement | null)[]>([]);
   const [index, setIndex] = useState(Math.min(startIndex, Math.max(songIds.length - 1, 0)));
   const [showChords, setShowChords] = useState(true);
+  const [transposeOffset, setTransposeOffset] = useState(0);
   const didJump = useRef(false);
 
   const goTo = useCallback((i: number, behavior: ScrollBehavior = "smooth") => {
@@ -181,7 +191,8 @@ export default function PlaylistPlayPage({
                 {song ? (
                   <SongDetailView
                     song={song}
-                    initialKey={keyFor(sid)}
+                    variant="play"
+                    initialKey={shiftKey(keyFor(sid), transposeOffset)}
                     showChords={showChords}
                     onShowChordsChange={setShowChords}
                   />
@@ -197,6 +208,30 @@ export default function PlaylistPlayPage({
               </section>
             );
           })}
+        </div>
+      )}
+
+      {songIds.length > 0 && (
+        <div className="pointer-events-none fixed right-4 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] z-50 flex flex-col gap-2">
+          <Button
+            type="button"
+            size="icon"
+            className="pointer-events-auto size-12 rounded-full shadow-lg"
+            onClick={() => setTransposeOffset((n) => n + 1)}
+            aria-label="Transpose up"
+          >
+            <Plus className="size-5" />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            className="pointer-events-auto size-12 rounded-full shadow-lg"
+            onClick={() => setTransposeOffset((n) => n - 1)}
+            aria-label="Transpose down"
+          >
+            <Minus className="size-5" />
+          </Button>
         </div>
       )}
     </>

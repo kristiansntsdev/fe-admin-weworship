@@ -19,6 +19,8 @@ export function SongDetailView({
   showChords,
   onShowChordsChange,
   onCurrentKeyChange,
+  /** Play mode: chords toggle + lyrics only (no meta / key picker). */
+  variant = "full",
 }: {
   song: Song;
   /** Playlist key (or other override) to open in — falls back to the song's own key. */
@@ -26,14 +28,35 @@ export function SongDetailView({
   showChords: boolean;
   onShowChordsChange: (v: boolean) => void;
   onCurrentKeyChange?: (key: string | null) => void;
+  variant?: "full" | "play";
 }) {
   const originalKey = keyRoot(song.base_chord);
   const [pickedKey, setPickedKey] = useState<string | null>(null);
-  const currentKey = pickedKey ?? keyRoot(initialKey) ?? originalKey;
+  // Play mode is controlled by initialKey (parent applies transpose); don't keep a local pick.
+  const currentKey = variant === "play" ? (keyRoot(initialKey) ?? originalKey) : (pickedKey ?? keyRoot(initialKey) ?? originalKey);
 
   useEffect(() => {
     onCurrentKeyChange?.(currentKey);
   }, [currentKey, onCurrentKeyChange]);
+
+  if (variant === "play") {
+    return (
+      <div className="space-y-4 p-4 pb-24">
+        <div className="flex items-center justify-end gap-2">
+          <Switch id={`show-chords-play-${song.id}`} checked={showChords} onCheckedChange={onShowChordsChange} />
+          <Label htmlFor={`show-chords-play-${song.id}`} className="text-sm">
+            Chords
+          </Label>
+        </div>
+        <Lyrics
+          source={song.lyrics_and_chords ?? ""}
+          fromKey={originalKey}
+          toKey={currentKey}
+          showChords={showChords}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 p-4">
