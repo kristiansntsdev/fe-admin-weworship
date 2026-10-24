@@ -67,9 +67,9 @@ export function proxy(req: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from prototype login/register
+  // Redirect authenticated users away from prototype login/register into the app home tab
   if (isPrototypePublic && !pathname.startsWith("/prototype/auth") && sessionToken && !isExpired(sessionToken)) {
-    return NextResponse.redirect(new URL("/prototype", req.url));
+    return NextResponse.redirect(new URL("/prototype/home", req.url));
   }
 
   // Protect dashboard routes — redirect to login if no session

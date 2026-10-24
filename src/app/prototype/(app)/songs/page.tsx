@@ -50,7 +50,16 @@ export default function SongsPage() {
 
   return (
     <>
-      <PageHeader title="Songs">
+      <PageHeader
+        title="Songs"
+        actions={
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/prototype/requests" aria-label="Song requests">
+              <MessageSquarePlus />
+            </Link>
+          </Button>
+        }
+      >
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-4 text-muted-foreground" />
