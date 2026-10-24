@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
 
@@ -8,7 +8,6 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { type CarouselApi, Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -47,29 +46,51 @@ export default function PlaylistPlayPage({
 
   const keyFor = (sid: number) => playlist?.song_keys?.[String(sid)] ?? songsById.get(sid)?.base_chord ?? null;
 
-  const [api, setApi] = useState<CarouselApi>();
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const pageRefs = useRef<(HTMLElement | null)[]>([]);
   const [index, setIndex] = useState(Math.min(startIndex, Math.max(songIds.length - 1, 0)));
   const [showChords, setShowChords] = useState(true);
+  const didJump = useRef(false);
 
-  const onSelect = useCallback((embla: NonNullable<CarouselApi>) => {
-    setIndex(embla.selectedScrollSnap());
+  const goTo = useCallback((i: number, behavior: ScrollBehavior = "smooth") => {
+    const el = pageRefs.current[i];
+    if (!el) return;
+    el.scrollIntoView({ behavior, inline: "start", block: "nearest" });
+    setIndex(i);
   }, []);
 
+  // Track which page is centered via IntersectionObserver (native screen paging).
   useEffect(() => {
-    if (!api) return;
-    onSelect(api);
-    api.on("select", onSelect);
-    return () => {
-      api.off("select", onSelect);
-    };
-  }, [api, onSelect]);
+    const root = scrollerRef.current;
+    if (!root || songIds.length === 0) return;
 
-  // Jump to ?i= once songs are known (Embla may init before the list is ready).
+    const io = new IntersectionObserver(
+      (entries) => {
+        let best: { i: number; ratio: number } | null = null;
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const i = Number((e.target as HTMLElement).dataset.index);
+          if (Number.isNaN(i)) continue;
+          if (!best || e.intersectionRatio > best.ratio) best = { i, ratio: e.intersectionRatio };
+        }
+        if (best) setIndex(best.i);
+      },
+      { root, threshold: [0.55, 0.75, 0.9] },
+    );
+
+    for (const el of pageRefs.current) if (el) io.observe(el);
+    return () => io.disconnect();
+  }, [songIds.length]);
+
+  // Jump to ?i= once pages exist.
   useEffect(() => {
-    if (!api || songIds.length === 0) return;
+    if (didJump.current || songIds.length === 0) return;
     const target = Math.min(startIndex, songIds.length - 1);
-    if (api.selectedScrollSnap() !== target) api.scrollTo(target, true);
-  }, [api, songIds.length, startIndex]);
+    requestAnimationFrame(() => {
+      goTo(target, "instant");
+      didJump.current = true;
+    });
+  }, [songIds.length, startIndex, goTo]);
 
   const currentId = songIds[index];
   const currentSong = currentId != null ? songsById.get(currentId) : undefined;
@@ -87,7 +108,7 @@ export default function PlaylistPlayPage({
                 variant="ghost"
                 size="icon"
                 disabled={index <= 0}
-                onClick={() => api?.scrollPrev()}
+                onClick={() => goTo(index - 1)}
                 aria-label="Previous song"
               >
                 <ChevronLeft />
@@ -99,7 +120,7 @@ export default function PlaylistPlayPage({
                 variant="ghost"
                 size="icon"
                 disabled={index >= songIds.length - 1}
-                onClick={() => api?.scrollNext()}
+                onClick={() => goTo(index + 1)}
                 aria-label="Next song"
               >
                 <ChevronRight />
@@ -140,36 +161,43 @@ export default function PlaylistPlayPage({
           </EmptyContent>
         </Empty>
       ) : (
-        <Carousel setApi={setApi} opts={{ align: "start", containScroll: "trimSnaps" }} className="w-full">
-          <CarouselContent className="-ml-0">
-            {songIds.map((sid, i) => {
-              const song = songsById.get(sid);
-              const failed = songQueries[i]?.isError;
-              return (
-                <CarouselItem key={sid} className="pl-0">
-                  <div className="max-h-[calc(100dvh-3.5rem-4rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto overscroll-y-contain">
-                    {song ? (
-                      <SongDetailView
-                        song={song}
-                        initialKey={keyFor(sid)}
-                        showChords={showChords}
-                        onShowChordsChange={setShowChords}
-                      />
-                    ) : failed ? (
-                      <p className="p-4 text-muted-foreground text-sm">Song unavailable</p>
-                    ) : (
-                      <div className="space-y-3 p-4">
-                        <Skeleton className="h-5 w-1/2" />
-                        <Skeleton className="h-9 w-full" />
-                        <Skeleton className="h-64 w-full" />
-                      </div>
-                    )}
+        <div
+          ref={scrollerRef}
+          className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          {songIds.map((sid, i) => {
+            const song = songsById.get(sid);
+            const failed = songQueries[i]?.isError;
+            return (
+              <section
+                key={sid}
+                data-index={i}
+                ref={(el) => {
+                  pageRefs.current[i] = el;
+                }}
+                className="h-[calc(100dvh-3.5rem-4rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain"
+              >
+                {song ? (
+                  <SongDetailView
+                    song={song}
+                    initialKey={keyFor(sid)}
+                    showChords={showChords}
+                    onShowChordsChange={setShowChords}
+                  />
+                ) : failed ? (
+                  <p className="p-4 text-muted-foreground text-sm">Song unavailable</p>
+                ) : (
+                  <div className="space-y-3 p-4">
+                    <Skeleton className="h-5 w-1/2" />
+                    <Skeleton className="h-9 w-full" />
+                    <Skeleton className="h-64 w-full" />
                   </div>
-                </CarouselItem>
-              );
-            })}
-          </CarouselContent>
-        </Carousel>
+                )}
+              </section>
+            );
+          })}
+        </div>
       )}
     </>
   );
