@@ -5,7 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AtSign, ChevronRight, LayoutDashboard, LogOut } from "lucide-react";
+import { AtSign, ChevronRight, History, LayoutDashboard, LogOut, Star } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +57,34 @@ export default function AccountPage() {
             </div>
             {me.role !== "user" && <Badge variant="secondary">{me.role}</Badge>}
           </div>
+        )}
+
+        {me && (
+          <section className="space-y-2">
+            <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Activity</h2>
+            <ul className="divide-y rounded-lg border">
+              <li>
+                <Link href="/prototype/account/search-history" className="flex items-center gap-3 px-4 py-3">
+                  <History className="size-5 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">Search history</span>
+                    <span className="block text-muted-foreground text-sm">Recent song searches</span>
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </Link>
+              </li>
+              <li>
+                <Link href="/prototype/account/favorites" className="flex items-center gap-3 px-4 py-3">
+                  <Star className="size-5 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">Favorites</span>
+                    <span className="block text-muted-foreground text-sm">Songs you have starred</span>
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </Link>
+              </li>
+            </ul>
+          </section>
         )}
 
         {me && (

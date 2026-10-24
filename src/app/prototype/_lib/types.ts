@@ -36,6 +36,8 @@ export interface Song {
   tags: Tag[];
   createdAt: string;
   updatedAt: string;
+  /** Present on GET /songs/:id and GET /favorites when authenticated. */
+  is_favorite?: boolean;
 }
 
 /** Song ranked by views or playlist adds — included on GET /home. */
