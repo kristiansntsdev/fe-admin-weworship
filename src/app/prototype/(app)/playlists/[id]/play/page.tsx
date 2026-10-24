@@ -9,9 +9,8 @@ import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
+import { Toggle } from "@/components/ui/toggle";
 
 import { PageHeader } from "../../../../_components/page-header";
 import { SongDetailView } from "../../../../_components/song-detail-view";
@@ -215,12 +214,15 @@ export default function PlaylistPlayPage({
 
       {songIds.length > 0 && (
         <div className="pointer-events-none fixed right-4 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] z-50 flex flex-col items-end gap-2">
-          <div className="pointer-events-auto flex items-center gap-2 rounded-full border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
-            <Switch id="play-show-chords" checked={showChords} onCheckedChange={setShowChords} />
-            <Label htmlFor="play-show-chords" className="pr-0.5 text-sm">
-              Chords
-            </Label>
-          </div>
+          <Toggle
+            variant="outline"
+            pressed={showChords}
+            onPressedChange={setShowChords}
+            aria-label="Show chords"
+            className="pointer-events-auto bg-background/95 shadow-lg backdrop-blur"
+          >
+            Chords
+          </Toggle>
           <Button
             type="button"
             size="icon"

@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Toggle } from "@/components/ui/toggle";
 
 import { keyRoot } from "../_lib/chordpro";
 import { artistLabel } from "../_lib/songs";
@@ -77,12 +76,15 @@ export function SongDetailView({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <p className="font-medium text-sm">{currentKey ? `Key of ${currentKey}` : "Key unknown"}</p>
-          <div className="flex items-center gap-2">
-            <Switch id={`show-chords-${song.id}`} checked={showChords} onCheckedChange={onShowChordsChange} />
-            <Label htmlFor={`show-chords-${song.id}`} className="text-sm">
-              Chords
-            </Label>
-          </div>
+          <Toggle
+            variant="outline"
+            size="sm"
+            pressed={showChords}
+            onPressedChange={onShowChordsChange}
+            aria-label="Show chords"
+          >
+            Chords
+          </Toggle>
         </div>
         {currentKey && <KeyPicker value={currentKey} onChange={setPickedKey} originalKey={originalKey} />}
       </div>

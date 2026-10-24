@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Toggle } from "@/components/ui/toggle";
 
 import { DEMO_SONG } from "../_lib/home";
 import { KeyPicker } from "./key-picker";
@@ -22,12 +21,16 @@ export function TransposeDemo() {
           <h2 className="truncate font-semibold text-lg">{DEMO_SONG.title}</h2>
           <p className="text-muted-foreground text-sm">{DEMO_SONG.credit}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2 pt-1">
-          <Switch id="demo-chords" checked={showChords} onCheckedChange={setShowChords} />
-          <Label htmlFor="demo-chords" className="text-sm">
-            Chords
-          </Label>
-        </div>
+        <Toggle
+          variant="outline"
+          size="sm"
+          pressed={showChords}
+          onPressedChange={setShowChords}
+          aria-label="Show chords"
+          className="shrink-0"
+        >
+          Chords
+        </Toggle>
       </div>
       <div className="space-y-1.5">
         <p className="text-muted-foreground text-xs">Tap a key — every chord follows.</p>
