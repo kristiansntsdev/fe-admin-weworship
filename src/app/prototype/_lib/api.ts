@@ -43,6 +43,7 @@ export function errorMessage(err: unknown): string {
 
 export const qk = {
   me: ["me"] as const,
+  home: ["home"] as const,
   songs: (q: SongQuery) =>
     [
       "songs",

@@ -38,6 +38,14 @@ export interface Song {
   updatedAt: string;
 }
 
+// GET /home — public catalog overview. weekly_share_count = joins via share link since Monday.
+export interface HomeStats {
+  song_count: number;
+  artist_count: number;
+  shareable_playlist_count: number;
+  weekly_share_count: number;
+}
+
 export type SongSort = "relevance" | "title-asc" | "title-desc" | "key-asc" | "key-desc";
 
 export interface SongQuery {

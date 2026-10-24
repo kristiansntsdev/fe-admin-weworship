@@ -5,7 +5,7 @@ const AUTH_COOKIE = "session_token";
 const BE = process.env.NEXT_PUBLIC_GO_URL ?? process.env.GO_DEV_URL ?? "http://localhost:3001";
 
 // Only the end-user endpoints the /prototype PWA needs are forwarded.
-const ALLOWED_PREFIXES = ["auth/me", "songs", "artists", "playlists", "song-requests"];
+const ALLOWED_PREFIXES = ["auth/me", "home", "songs", "artists", "playlists", "song-requests"];
 
 type Params = { params: Promise<{ path: string[] }> };
 
