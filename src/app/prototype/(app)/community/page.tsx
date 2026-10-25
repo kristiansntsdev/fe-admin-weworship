@@ -10,7 +10,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { CreatePostSheet } from "../../_components/create-post-sheet";
 import { PageHeader } from "../../_components/page-header";
 import { PostCard } from "../../_components/post-card";
-import { type CommunityPost, loadPosts } from "../../_lib/community";
+import { type CommunityPost, loadPosts, toggleLike } from "../../_lib/community";
 
 export default function CommunityPage() {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -21,6 +21,10 @@ export default function CommunityPage() {
     setPosts(loadPosts());
     setReady(true);
   }, []);
+
+  function onToggleLike(postId: string) {
+    setPosts(toggleLike(postId));
+  }
 
   return (
     <>
@@ -53,7 +57,7 @@ export default function CommunityPage() {
       ) : (
         <div>
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard key={post.id} post={post} onToggleLike={onToggleLike} />
           ))}
         </div>
       )}

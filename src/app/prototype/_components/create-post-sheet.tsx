@@ -22,15 +22,47 @@ import { Textarea } from "@/components/ui/textarea";
 import { qk } from "../_lib/api";
 import {
   type CommunityPost,
+  type CommunitySong,
   isYoutubePlaylistUrl,
   MOCK_PLAYLISTS,
   savePost,
+  songsForMockPlaylist,
 } from "../_lib/community";
-import { listPlaylists } from "../_lib/playlists";
+import { getPlaylist, listPlaylists } from "../_lib/playlists";
 import { usePrototypeSignedIn } from "../_lib/session";
-import { getMe } from "../_lib/songs";
+import { artistLabel, getMe, getSong } from "../_lib/songs";
 
 type PlaylistChoice = { id: number; name: string; songCount: number };
+
+async function snapshotSongs(playlistId: number, songCount: number): Promise<CommunitySong[]> {
+  if (playlistId < 0) return songsForMockPlaylist(playlistId);
+  try {
+    const pl = await getPlaylist(playlistId);
+    const ids = pl.songs ?? [];
+    const songs = await Promise.all(
+      ids.map(async (sid) => {
+        try {
+          const s = await getSong(sid);
+          return {
+            id: s.id,
+            title: s.title,
+            artist: artistLabel(s.artist) || "Unknown artist",
+            key: pl.song_keys?.[String(sid)] ?? s.base_chord,
+          } satisfies CommunitySong;
+        } catch {
+          return { id: sid, title: `Song #${sid}`, artist: "", key: pl.song_keys?.[String(sid)] ?? null };
+        }
+      }),
+    );
+    return songs;
+  } catch {
+    return Array.from({ length: songCount }, (_, i) => ({
+      title: `Song ${i + 1}`,
+      artist: "",
+      key: null,
+    }));
+  }
+}
 
 export function CreatePostSheet({
   open,
@@ -103,6 +135,7 @@ export function CreatePostSheet({
     setSubmitting(true);
     try {
       const me = meQuery.data;
+      const songs = await snapshotSongs(choice.id, choice.songCount);
       const post: CommunityPost = {
         id: `local-${Date.now()}`,
         authorName: me?.username ?? "You",
@@ -110,7 +143,10 @@ export function CreatePostSheet({
         description: caption,
         playlistId: choice.id,
         playlistName: choice.name,
-        songCount: choice.songCount,
+        songCount: songs.length || choice.songCount,
+        songs,
+        likeCount: 0,
+        likedByMe: false,
         ...(yt ? { youtubePlaylistUrl: yt } : {}),
         createdAt: new Date().toISOString(),
       };
