@@ -14,7 +14,7 @@ const TABS = [
   { href: "/prototype/community", label: "Community", icon: Users },
   { href: "/prototype/songs", label: "Song", icon: Music },
   { href: "/prototype/playlists", auth: true, label: "Playlist", icon: ListMusic },
-  { href: "/prototype/account", auth: true, label: "Account", icon: CircleUserRound },
+  { href: "/prototype/account", auth: true, label: "Profile", icon: CircleUserRound },
 ] as const;
 
 export function BottomNav() {

@@ -1,95 +1,141 @@
 "use client";
 
-import { useState } from "react";
-
 import Link from "next/link";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AtSign, BadgeCheck, ChevronRight, Clock, History, LayoutDashboard, LogOut, Star } from "lucide-react";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronRight, History, ListMusic, Settings, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { PageHeader } from "../../_components/page-header";
-import { UsernameDialog } from "../../_components/username-dialog";
-import { VerificationRequestSheet } from "../../_components/verification-request-sheet";
 import { VerifiedBadge } from "../../_components/verified-badge";
 import { errorMessage, qk } from "../../_lib/api";
-import { prototypeChangeUsername } from "../../_lib/auth-actions";
+import { listPlaylists } from "../../_lib/playlists";
 import { getMe } from "../../_lib/songs";
-import type { Me } from "../../_lib/types";
-import { getMyVerificationRequest } from "../../_lib/verification";
+
+const PLAYLIST_PREVIEW = 5;
 
 export default function AccountPage() {
-  const queryClient = useQueryClient();
-  const [renaming, setRenaming] = useState(false);
-  const [requestOpen, setRequestOpen] = useState(false);
   const { data: me, isPending, isError, error } = useQuery({ queryKey: qk.me, queryFn: getMe });
-  const verificationQuery = useQuery({
-    queryKey: qk.verificationMe,
-    queryFn: getMyVerificationRequest,
-    enabled: !!me && !me.verified,
-    retry: false,
-  });
+  const playlistsQuery = useQuery({ queryKey: qk.playlists, queryFn: listPlaylists, enabled: !!me });
 
-  async function changeUsername(username: string) {
-    const result = await prototypeChangeUsername(username);
-    if ("error" in result) throw new Error(result.error);
-    queryClient.setQueryData<Me>(qk.me, (prev) => (prev ? { ...prev, username: result.username } : prev));
-    toast.success("Username updated");
-  }
-
-  const latestRequest = verificationQuery.data;
-  const pending = latestRequest?.status === "pending";
-  const rejected = latestRequest?.status === "rejected";
+  const playlists = playlistsQuery.data ?? [];
+  const preview = playlists.slice(0, PLAYLIST_PREVIEW);
 
   return (
     <>
-      <PageHeader title="Account" />
+      <PageHeader
+        title="Profile"
+        actions={
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/prototype/account/settings" aria-label="Settings">
+              <Settings className="size-5" />
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="space-y-6 p-4">
         {isPending ? (
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-14 rounded-full" />
-            <div className="flex-1 space-y-1.5">
-              <Skeleton className="h-5 w-1/2" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
+          <div className="flex flex-col items-center gap-3 pt-2">
+            <Skeleton className="size-20 rounded-full" />
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-52" />
           </div>
         ) : isError || !me ? (
           <p className="text-destructive text-sm">{errorMessage(error)}</p>
         ) : (
-          <div className="flex items-center gap-3">
-            <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground text-xl uppercase">
-              {me.username.slice(0, 1)}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="flex min-w-0 items-center gap-1.5 font-semibold text-lg">
+          <div className="flex flex-col items-center gap-2 pt-2 text-center">
+            {/* ponytail: plain img — avatar hosts vary; next/image needs remotePatterns */}
+            {me.avatar_url ? (
+              <img src={me.avatar_url} alt="" className="size-20 rounded-full object-cover" />
+            ) : (
+              <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-2xl text-primary-foreground uppercase">
+                {me.username.slice(0, 1)}
+              </span>
+            )}
+            <div className="min-w-0 space-y-1">
+              <p className="flex items-center justify-center gap-1.5 font-semibold text-xl">
                 <span className="truncate">{me.username}</span>
                 {me.verified && <VerifiedBadge />}
               </p>
               <p className="truncate text-muted-foreground text-sm">{me.email}</p>
+              {me.role !== "user" && (
+                <Badge variant="secondary" className="mt-1">
+                  {me.role}
+                </Badge>
+              )}
             </div>
-            {me.role !== "user" && <Badge variant="secondary">{me.role}</Badge>}
           </div>
+        )}
+
+        {me && (
+          <section className="space-y-2">
+            <div className="flex items-end justify-between gap-2">
+              <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">My playlists</h2>
+              {playlists.length > 0 && (
+                <Link href="/prototype/playlists" className="font-medium text-primary text-xs">
+                  See all
+                </Link>
+              )}
+            </div>
+            {playlistsQuery.isPending ? (
+              <ul className="divide-y rounded-lg border">
+                {Array.from({ length: 3 }, (_, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
+                  <li key={i} className="flex items-center gap-3 px-4 py-3">
+                    <Skeleton className="size-10 rounded-md" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-3 w-1/3" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : playlistsQuery.isError ? (
+              <p className="text-destructive text-sm">{errorMessage(playlistsQuery.error)}</p>
+            ) : playlists.length === 0 ? (
+              <div className="rounded-lg border px-4 py-6 text-center">
+                <ListMusic className="mx-auto size-8 text-muted-foreground" />
+                <p className="mt-2 font-medium text-sm">No playlists yet</p>
+                <p className="mt-1 text-muted-foreground text-sm">Build a setlist for your next service.</p>
+                <Button size="sm" className="mt-3" asChild>
+                  <Link href="/prototype/playlists">Go to playlists</Link>
+                </Button>
+              </div>
+            ) : (
+              <ul className="divide-y rounded-lg border">
+                {preview.map((p) => (
+                  <li key={p.id}>
+                    <Link
+                      href={`/prototype/playlists/${p.id}`}
+                      className="flex items-center gap-3 px-4 py-3"
+                    >
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <ListMusic className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{p.playlist_name}</span>
+                        <span className="block text-muted-foreground text-sm">
+                          {p.songs?.length ?? 0} songs
+                          {p.access_type !== "owner" ? " · Joined" : ""}
+                        </span>
+                      </span>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         )}
 
         {me && (
           <section className="space-y-2">
             <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Activity</h2>
             <ul className="divide-y rounded-lg border">
-              <li>
-                <Link href="/prototype/account/search-history" className="flex items-center gap-3 px-4 py-3">
-                  <History className="size-5 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-medium">Search history</span>
-                    <span className="block text-muted-foreground text-sm">Songs you have recently searched</span>
-                  </span>
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                </Link>
-              </li>
               <li>
                 <Link href="/prototype/account/favorites" className="flex items-center gap-3 px-4 py-3">
                   <Star className="size-5 shrink-0 text-muted-foreground" />
@@ -100,91 +146,20 @@ export default function AccountPage() {
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </Link>
               </li>
-            </ul>
-          </section>
-        )}
-
-        {me && (
-          <section className="space-y-2">
-            <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Settings</h2>
-            <ul className="divide-y rounded-lg border">
               <li>
-                <button
-                  type="button"
-                  onClick={() => setRenaming(true)}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left"
-                >
-                  <AtSign className="size-5 shrink-0 text-muted-foreground" />
+                <Link href="/prototype/account/search-history" className="flex items-center gap-3 px-4 py-3">
+                  <History className="size-5 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1">
-                    <span className="block font-medium">Username</span>
-                    <span className="block truncate text-muted-foreground text-sm">{me.username}</span>
+                    <span className="block font-medium">Search history</span>
+                    <span className="block text-muted-foreground text-sm">Songs you have recently searched</span>
                   </span>
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                </button>
+                </Link>
               </li>
-              {!me.verified && (
-                <li>
-                  {pending ? (
-                    <div className="flex items-center gap-3 px-4 py-3 text-muted-foreground">
-                      <Clock className="size-5 shrink-0" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-medium text-foreground">Verification pending</span>
-                        <span className="block text-sm">We’re reviewing your official account request</span>
-                      </span>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setRequestOpen(true)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left"
-                    >
-                      <BadgeCheck className="size-5 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-medium">Request official account</span>
-                        <span className="block text-muted-foreground text-sm">
-                          {rejected ? "Previous request was declined — you can apply again" : "Get a verified badge on your posts"}
-                        </span>
-                      </span>
-                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                    </button>
-                  )}
-                </li>
-              )}
             </ul>
           </section>
         )}
-
-        <div className="flex flex-col gap-2">
-          {me && me.role !== "user" && (
-            <Button variant="outline" asChild>
-              <Link href="/dashboard/default">
-                <LayoutDashboard />
-                Open admin dashboard
-              </Link>
-            </Button>
-          )}
-          <Button variant="outline" asChild>
-            <a href="/prototype/auth/logout">
-              <LogOut />
-              Log out
-            </a>
-          </Button>
-        </div>
-
-        <p className="text-center text-muted-foreground text-xs">
-          Tip: add WeWorship to your home screen from your browser&apos;s share or install menu.
-        </p>
       </div>
-
-      {renaming && me && (
-        <UsernameDialog initialUsername={me.username} onSubmit={changeUsername} onClose={() => setRenaming(false)} />
-      )}
-
-      <VerificationRequestSheet
-        open={requestOpen}
-        onOpenChange={setRequestOpen}
-        rejectNote={rejected ? latestRequest?.admin_notes : null}
-      />
     </>
   );
 }
