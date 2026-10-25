@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import type { CommunityPost } from "../_lib/community";
+import { VerifiedBadge } from "./verified-badge";
 
 export function PostCard({
   post,
@@ -30,7 +31,10 @@ export function PostCard({
       <Link href={detailHref} className="block space-y-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <header className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate font-semibold text-sm">{post.authorName}</p>
+            <p className="flex min-w-0 items-center gap-1 font-semibold text-sm">
+              <span className="truncate">{post.authorName}</span>
+              {post.authorVerified && <VerifiedBadge size="sm" />}
+            </p>
             <p className="truncate text-muted-foreground text-xs">@{post.authorHandle}</p>
           </div>
           {time && <time className="shrink-0 text-muted-foreground text-xs">{time}</time>}

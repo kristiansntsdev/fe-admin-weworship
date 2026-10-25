@@ -134,5 +134,20 @@ export interface Me {
   username: string;
   email: string;
   role: "user" | "admin" | "maintainer";
+  verified?: boolean;
   avatar_url?: string | null;
+}
+
+export type VerificationRequestStatus = "pending" | "approved" | "rejected";
+
+export interface VerificationRequest {
+  id: number;
+  user_id: number;
+  display_name: string;
+  proof_link: string;
+  note: string | null;
+  status: VerificationRequestStatus;
+  admin_notes: string | null;
+  createdAt: string;
+  updatedAt: string;
 }

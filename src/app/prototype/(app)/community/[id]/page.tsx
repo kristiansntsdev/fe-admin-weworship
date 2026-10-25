@@ -16,6 +16,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "
 import { cn } from "@/lib/utils";
 
 import { PageHeader } from "../../../_components/page-header";
+import { VerifiedBadge } from "../../../_components/verified-badge";
 import { errorMessage, qk } from "../../../_lib/api";
 import { type CommunityPost, getPost, incrementCopyCount, toggleLike } from "../../../_lib/community";
 import { addSongs, createPlaylist } from "../../../_lib/playlists";
@@ -109,7 +110,10 @@ export default function CommunityPostDetailPage({ params }: { params: Promise<{ 
       <div className="space-y-4 px-4 py-4">
         <header className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate font-semibold">{post.authorName}</p>
+            <p className="flex min-w-0 items-center gap-1.5 font-semibold">
+              <span className="truncate">{post.authorName}</span>
+              {post.authorVerified && <VerifiedBadge />}
+            </p>
             <p className="truncate text-muted-foreground text-sm">
               @{post.authorHandle}
               {time ? ` · ${time}` : ""}

@@ -5,7 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AtSign, ChevronRight, History, LayoutDashboard, LogOut, Star } from "lucide-react";
+import { AtSign, BadgeCheck, ChevronRight, Clock, History, LayoutDashboard, LogOut, Star } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -14,15 +14,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { PageHeader } from "../../_components/page-header";
 import { UsernameDialog } from "../../_components/username-dialog";
+import { VerificationRequestSheet } from "../../_components/verification-request-sheet";
+import { VerifiedBadge } from "../../_components/verified-badge";
 import { errorMessage, qk } from "../../_lib/api";
 import { prototypeChangeUsername } from "../../_lib/auth-actions";
 import { getMe } from "../../_lib/songs";
 import type { Me } from "../../_lib/types";
+import { getMyVerificationRequest } from "../../_lib/verification";
 
 export default function AccountPage() {
   const queryClient = useQueryClient();
   const [renaming, setRenaming] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
   const { data: me, isPending, isError, error } = useQuery({ queryKey: qk.me, queryFn: getMe });
+  const verificationQuery = useQuery({
+    queryKey: qk.verificationMe,
+    queryFn: getMyVerificationRequest,
+    enabled: !!me && !me.verified,
+    retry: false,
+  });
 
   async function changeUsername(username: string) {
     const result = await prototypeChangeUsername(username);
@@ -30,6 +40,10 @@ export default function AccountPage() {
     queryClient.setQueryData<Me>(qk.me, (prev) => (prev ? { ...prev, username: result.username } : prev));
     toast.success("Username updated");
   }
+
+  const latestRequest = verificationQuery.data;
+  const pending = latestRequest?.status === "pending";
+  const rejected = latestRequest?.status === "rejected";
 
   return (
     <>
@@ -52,7 +66,10 @@ export default function AccountPage() {
               {me.username.slice(0, 1)}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-lg">{me.username}</p>
+              <p className="flex min-w-0 items-center gap-1.5 font-semibold text-lg">
+                <span className="truncate">{me.username}</span>
+                {me.verified && <VerifiedBadge />}
+              </p>
               <p className="truncate text-muted-foreground text-sm">{me.email}</p>
             </div>
             {me.role !== "user" && <Badge variant="secondary">{me.role}</Badge>}
@@ -68,7 +85,7 @@ export default function AccountPage() {
                   <History className="size-5 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">Search history</span>
-                    <span className="block text-muted-foreground text-sm">Lagu yang baru kamu buka</span>
+                    <span className="block text-muted-foreground text-sm">Songs you have recently searched</span>
                   </span>
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </Link>
@@ -105,6 +122,34 @@ export default function AccountPage() {
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </button>
               </li>
+              {!me.verified && (
+                <li>
+                  {pending ? (
+                    <div className="flex items-center gap-3 px-4 py-3 text-muted-foreground">
+                      <Clock className="size-5 shrink-0" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-medium text-foreground">Verification pending</span>
+                        <span className="block text-sm">We’re reviewing your official account request</span>
+                      </span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setRequestOpen(true)}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                    >
+                      <BadgeCheck className="size-5 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-medium">Request official account</span>
+                        <span className="block text-muted-foreground text-sm">
+                          {rejected ? "Previous request was declined — you can apply again" : "Get a verified badge on your posts"}
+                        </span>
+                      </span>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  )}
+                </li>
+              )}
             </ul>
           </section>
         )}
@@ -119,7 +164,6 @@ export default function AccountPage() {
             </Button>
           )}
           <Button variant="outline" asChild>
-            {/* Plain anchor: the logout route handler clears the httpOnly cookie and redirects. */}
             <a href="/prototype/auth/logout">
               <LogOut />
               Log out
@@ -128,13 +172,19 @@ export default function AccountPage() {
         </div>
 
         <p className="text-center text-muted-foreground text-xs">
-          Tip: add WeWorship to your home screen from your browser's share or install menu.
+          Tip: add WeWorship to your home screen from your browser&apos;s share or install menu.
         </p>
       </div>
 
       {renaming && me && (
         <UsernameDialog initialUsername={me.username} onSubmit={changeUsername} onClose={() => setRenaming(false)} />
       )}
+
+      <VerificationRequestSheet
+        open={requestOpen}
+        onOpenChange={setRequestOpen}
+        rejectNote={rejected ? latestRequest?.admin_notes : null}
+      />
     </>
   );
 }

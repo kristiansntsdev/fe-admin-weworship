@@ -12,6 +12,7 @@ export type CommunityPost = {
   id: string;
   authorName: string;
   authorHandle: string;
+  authorVerified: boolean;
   description: string;
   playlistId: number;
   playlistName: string;
@@ -32,7 +33,7 @@ export type MockPlaylistOption = {
   songCount: number;
 };
 
-const STORAGE_KEY = "ww-prototype-community-posts-v3";
+const STORAGE_KEY = "ww-prototype-community-posts-v4";
 
 export const MOCK_PLAYLIST_SONGS: Record<number, CommunitySong[]> = {
   [-1]: [
@@ -78,6 +79,7 @@ const SEED: CommunityPost[] = [
     id: "seed-1",
     authorName: "Rina",
     authorHandle: "rina",
+    authorVerified: false,
     description: "Playlist disaat aku lagi sedih",
     playlistId: -1,
     playlistName: "Saat Sedih",
@@ -93,6 +95,7 @@ const SEED: CommunityPost[] = [
     id: "seed-2",
     authorName: "Andi",
     authorHandle: "andi.w",
+    authorVerified: true,
     description: "Setlist Minggu ini — siap ibadah!",
     playlistId: -2,
     playlistName: "Sunday Set A",
@@ -107,6 +110,7 @@ const SEED: CommunityPost[] = [
     id: "seed-3",
     authorName: "Maya",
     authorHandle: "maya",
+    authorVerified: true,
     description: "Lagu-lagu buat quiet time pagi",
     playlistId: -3,
     playlistName: "Pujian Pagi",
@@ -134,6 +138,7 @@ function normalize(raw: Record<string, unknown>): CommunityPost | null {
     id: raw.id,
     authorName: raw.authorName,
     authorHandle: raw.authorHandle,
+    authorVerified: Boolean(raw.authorVerified),
     description: raw.description,
     playlistId: raw.playlistId,
     playlistName: raw.playlistName,

@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { getSessionUser } from "@/lib/auth";
 
 import { UserRoleToggle } from "./_components/user-role-toggle";
+import { UserVerifiedToggle } from "./_components/user-verified-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ interface User {
   username: string;
   email: string;
   role: string;
+  verified: boolean;
   createdAt: string;
 }
 
@@ -48,13 +50,14 @@ export default async function UsersPage() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Verified</TableHead>
               <TableHead>Joined</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                   No users found. Users are created via the mobile app.
                 </TableCell>
               </TableRow>
@@ -73,6 +76,9 @@ export default async function UsersPage() {
                         initialRole={user.role === "maintainer" ? "maintainer" : "user"}
                       />
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <UserVerifiedToggle userId={user.id} initialVerified={Boolean(user.verified)} />
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(user.createdAt).toLocaleDateString("en-US", {

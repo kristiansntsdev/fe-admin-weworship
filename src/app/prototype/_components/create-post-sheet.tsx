@@ -140,6 +140,7 @@ export function CreatePostSheet({
         id: `local-${Date.now()}`,
         authorName: me?.username ?? "You",
         authorHandle: me?.username ?? "you",
+        authorVerified: Boolean(me?.verified),
         description: caption,
         playlistId: choice.id,
         playlistName: choice.name,

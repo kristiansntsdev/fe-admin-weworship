@@ -1,4 +1,5 @@
 import {
+  BadgeCheck,
   ChartBar,
   History,
   LayoutDashboard,
@@ -74,6 +75,12 @@ export const sidebarItems: NavGroup[] = [
         title: "Song Reports",
         url: "/dashboard/song-reports",
         icon: MessageSquareWarning,
+        roles: ["admin", "maintainer"],
+      },
+      {
+        title: "Verification",
+        url: "/dashboard/verification-requests",
+        icon: BadgeCheck,
         roles: ["admin", "maintainer"],
       },
       {
