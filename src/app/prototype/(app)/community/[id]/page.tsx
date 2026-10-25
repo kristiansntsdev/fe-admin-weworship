@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 import { PageHeader } from "../../../_components/page-header";
 import { errorMessage, qk } from "../../../_lib/api";
-import { type CommunityPost, getPost, toggleLike } from "../../../_lib/community";
+import { type CommunityPost, getPost, incrementCopyCount, toggleLike } from "../../../_lib/community";
 import { addSongs, createPlaylist } from "../../../_lib/playlists";
 import { prototypeLoginHref, usePrototypeSignedIn } from "../../../_lib/session";
 
@@ -56,6 +56,8 @@ export default function CommunityPostDetailPage({ params }: { params: Promise<{ 
         // Demo / seed songs have no catalog ids — empty playlist still lands in their library.
         toast.success(`Created “${name}” — demo songs weren’t copied to the catalog`);
       }
+      const next = incrementCopyCount(id);
+      setPost(next.find((p) => p.id === id) ?? post);
       await queryClient.invalidateQueries({ queryKey: qk.playlists });
       router.push(`/prototype/playlists/${created.id}`);
     } catch (err) {
@@ -136,17 +138,27 @@ export default function CommunityPostDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className={cn("gap-1.5 px-2", post.likedByMe && "text-primary")}
-          aria-pressed={post.likedByMe}
-          onClick={onLike}
-        >
-          <Heart className={cn("size-4", post.likedByMe && "fill-current")} />
-          <span className="tabular-nums text-xs">{post.likeCount}</span>
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={cn("gap-1.5 px-2", post.likedByMe && "text-primary")}
+            aria-pressed={post.likedByMe}
+            onClick={onLike}
+          >
+            <Heart className={cn("size-4", post.likedByMe && "fill-current")} />
+            <span className="tabular-nums text-xs">{post.likeCount}</span>
+          </Button>
+          <span
+            className="inline-flex items-center gap-1.5 px-2 text-muted-foreground"
+            title="Playlist copies"
+            aria-label={`${post.copyCount} playlist copies`}
+          >
+            <Copy className="size-4" />
+            <span className="tabular-nums text-xs">{post.copyCount}</span>
+          </span>
+        </div>
       </div>
 
       <section className="border-t">

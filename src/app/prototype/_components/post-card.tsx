@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { formatDistanceToNowStrict } from "date-fns";
-import { Heart, ListMusic, Youtube } from "lucide-react";
+import { Copy, Heart, ListMusic, Youtube } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,14 @@ export function PostCard({
           <Heart className={cn("size-4", post.likedByMe && "fill-current")} />
           <span className="tabular-nums text-xs">{post.likeCount}</span>
         </Button>
+        <span
+          className="inline-flex items-center gap-1.5 px-2 text-muted-foreground"
+          title="Playlist copies"
+          aria-label={`${post.copyCount} playlist copies`}
+        >
+          <Copy className="size-4" />
+          <span className="tabular-nums text-xs">{post.copyCount}</span>
+        </span>
         <Button type="button" variant="ghost" size="sm" className="text-muted-foreground text-xs" asChild>
           <Link href={detailHref}>View songs</Link>
         </Button>

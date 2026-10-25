@@ -147,6 +147,7 @@ export function CreatePostSheet({
         songs,
         likeCount: 0,
         likedByMe: false,
+        copyCount: 0,
         ...(yt ? { youtubePlaylistUrl: yt } : {}),
         createdAt: new Date().toISOString(),
       };

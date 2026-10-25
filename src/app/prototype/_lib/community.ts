@@ -20,6 +20,8 @@ export type CommunityPost = {
   youtubePlaylistUrl?: string;
   likeCount: number;
   likedByMe: boolean;
+  /** How many times someone copied this playlist into their library. */
+  copyCount: number;
   createdAt: string;
 };
 
@@ -30,7 +32,7 @@ export type MockPlaylistOption = {
   songCount: number;
 };
 
-const STORAGE_KEY = "ww-prototype-community-posts-v2";
+const STORAGE_KEY = "ww-prototype-community-posts-v3";
 
 export const MOCK_PLAYLIST_SONGS: Record<number, CommunitySong[]> = {
   [-1]: [
@@ -84,6 +86,7 @@ const SEED: CommunityPost[] = [
     youtubePlaylistUrl: "https://www.youtube.com/playlist?list=PLrAXtmRdnEQy6nuLMHjMZOz59Oq8RP4RV",
     likeCount: 12,
     likedByMe: false,
+    copyCount: 34,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
   },
   {
@@ -97,6 +100,7 @@ const SEED: CommunityPost[] = [
     songs: MOCK_PLAYLIST_SONGS[-2],
     likeCount: 5,
     likedByMe: false,
+    copyCount: 8,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
   },
   {
@@ -111,6 +115,7 @@ const SEED: CommunityPost[] = [
     youtubePlaylistUrl: "https://music.youtube.com/playlist?list=PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
     likeCount: 21,
     likedByMe: true,
+    copyCount: 56,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 50).toISOString(),
   },
 ];
@@ -137,6 +142,7 @@ function normalize(raw: Record<string, unknown>): CommunityPost | null {
     youtubePlaylistUrl: typeof raw.youtubePlaylistUrl === "string" ? raw.youtubePlaylistUrl : undefined,
     likeCount: typeof raw.likeCount === "number" ? raw.likeCount : 0,
     likedByMe: Boolean(raw.likedByMe),
+    copyCount: typeof raw.copyCount === "number" ? raw.copyCount : 0,
     createdAt: raw.createdAt,
   };
 }
@@ -177,6 +183,11 @@ export function toggleLike(postId: string): CommunityPost[] {
     const likedByMe = !p.likedByMe;
     return { ...p, likedByMe, likeCount: Math.max(0, p.likeCount + (likedByMe ? 1 : -1)) };
   });
+  return persist(posts);
+}
+
+export function incrementCopyCount(postId: string): CommunityPost[] {
+  const posts = loadPosts().map((p) => (p.id === postId ? { ...p, copyCount: p.copyCount + 1 } : p));
   return persist(posts);
 }
 
