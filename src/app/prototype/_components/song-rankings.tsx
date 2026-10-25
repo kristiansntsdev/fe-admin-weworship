@@ -1,10 +1,11 @@
 import Link from "next/link";
 
+import { formatDistanceToNowStrict } from "date-fns";
 import { Music } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import type { RankedSong } from "../_lib/types";
+import type { RankedSong, RecentSong } from "../_lib/types";
 
 const plural = (n: number | undefined, word: string) => {
   const count = n ?? 0;
@@ -89,6 +90,42 @@ export function MostAddedSongs({ songs }: { songs: RankedSong[] }) {
           </Link>
         </li>
       ))}
+    </ol>
+  );
+}
+
+export function NewlyAddedSongs({ songs }: { songs: RecentSong[] }) {
+  if (songs.length === 0) {
+    return <p className="text-muted-foreground text-sm">No new songs yet — check back after the next catalog add.</p>;
+  }
+
+  return (
+    <ol className="divide-y rounded-2xl border">
+      {songs.map((s) => {
+        const when = (() => {
+          const t = s.createdAt ? +new Date(s.createdAt) : 0;
+          return t ? formatDistanceToNowStrict(t, { addSuffix: true }) : null;
+        })();
+        return (
+          <li key={s.id}>
+            <Link href={`/prototype/songs/${s.id}`} className="flex items-center gap-3 px-4 py-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <Music className="size-4 text-muted-foreground" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="truncate font-medium">{s.title}</span>
+                  {when && <span className="shrink-0 text-muted-foreground text-xs">{when}</span>}
+                </span>
+                <span className="block truncate text-muted-foreground text-sm">
+                  {s.artist || "Unknown artist"}
+                  {s.key ? ` · Key ${s.key}` : ""}
+                </span>
+              </span>
+            </Link>
+          </li>
+        );
+      })}
     </ol>
   );
 }

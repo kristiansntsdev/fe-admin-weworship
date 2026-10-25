@@ -1,4 +1,7 @@
 // Client-only community feed — localStorage mock until a backend exists.
+// "new_song" posts are derived from GET /home recent_songs (not persisted).
+
+import type { RecentSong } from "./types";
 
 export type CommunitySong = {
   /** Real catalog id when known; omitted for seed/demo songs. */
@@ -8,8 +11,11 @@ export type CommunitySong = {
   key?: string | null;
 };
 
+export type CommunityPostKind = "playlist" | "new_song";
+
 export type CommunityPost = {
   id: string;
+  kind: CommunityPostKind;
   authorName: string;
   authorHandle: string;
   authorVerified: boolean;
@@ -25,6 +31,10 @@ export type CommunityPost = {
   copyCount: number;
   createdAt: string;
 };
+
+export function isSystemPost(post: Pick<CommunityPost, "id" | "kind">): boolean {
+  return post.kind === "new_song" || post.id.startsWith("new-song-");
+}
 
 /** Fallback options when the user has no API playlists yet. */
 export type MockPlaylistOption = {
@@ -77,6 +87,7 @@ export const MOCK_PLAYLISTS: MockPlaylistOption[] = [
 const SEED: CommunityPost[] = [
   {
     id: "seed-1",
+    kind: "playlist",
     authorName: "Rina",
     authorHandle: "rina",
     authorVerified: false,
@@ -93,6 +104,7 @@ const SEED: CommunityPost[] = [
   },
   {
     id: "seed-2",
+    kind: "playlist",
     authorName: "Andi",
     authorHandle: "andi.w",
     authorVerified: true,
@@ -108,6 +120,7 @@ const SEED: CommunityPost[] = [
   },
   {
     id: "seed-3",
+    kind: "playlist",
     authorName: "Maya",
     authorHandle: "maya",
     authorVerified: true,
@@ -133,9 +146,11 @@ function normalize(raw: Record<string, unknown>): CommunityPost | null {
   const fallbackSongs = MOCK_PLAYLIST_SONGS[raw.playlistId as number] ?? [];
   const songs = Array.isArray(raw.songs) ? (raw.songs as CommunitySong[]) : fallbackSongs;
   const songCount = typeof raw.songCount === "number" ? raw.songCount : songs.length;
+  const kind: CommunityPostKind = raw.kind === "new_song" ? "new_song" : "playlist";
 
   return {
     id: raw.id,
+    kind,
     authorName: raw.authorName,
     authorHandle: raw.authorHandle,
     authorVerified: Boolean(raw.authorVerified),
@@ -150,6 +165,40 @@ function normalize(raw: Record<string, unknown>): CommunityPost | null {
     copyCount: typeof raw.copyCount === "number" ? raw.copyCount : 0,
     createdAt: raw.createdAt,
   };
+}
+
+/** Turn catalog recent_songs into WeWorship system posts for the community feed. */
+export function postsFromRecentSongs(recent: RecentSong[]): CommunityPost[] {
+  return recent.map((s) => ({
+    id: `new-song-${s.id}`,
+    kind: "new_song" as const,
+    authorName: "WeWorship",
+    authorHandle: "weworship",
+    authorVerified: true,
+    description: `New song added: ${s.title}`,
+    playlistId: 0,
+    playlistName: s.title,
+    songCount: 1,
+    songs: [
+      {
+        id: s.id,
+        title: s.title,
+        artist: s.artist ?? "",
+        key: s.key,
+      },
+    ],
+    likeCount: 0,
+    likedByMe: false,
+    copyCount: 0,
+    createdAt: s.createdAt ?? new Date().toISOString(),
+  }));
+}
+
+/** Merge API-derived new-song posts with local playlist posts, newest first. */
+export function mergeCommunityFeed(local: CommunityPost[], recent: RecentSong[]): CommunityPost[] {
+  return [...postsFromRecentSongs(recent), ...local].sort(
+    (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
+  );
 }
 
 function persist(posts: CommunityPost[]) {

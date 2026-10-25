@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { useQuery } from "@tanstack/react-query";
 import { Newspaper, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,20 +11,29 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { CreatePostSheet } from "../../_components/create-post-sheet";
 import { PageHeader } from "../../_components/page-header";
 import { PostCard } from "../../_components/post-card";
-import { type CommunityPost, loadPosts, toggleLike } from "../../_lib/community";
+import { qk } from "../../_lib/api";
+import { type CommunityPost, loadPosts, mergeCommunityFeed, toggleLike } from "../../_lib/community";
+import { getHomeStats } from "../../_lib/home";
 
 export default function CommunityPage() {
-  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [localPosts, setLocalPosts] = useState<CommunityPost[]>([]);
   const [composeOpen, setComposeOpen] = useState(false);
   const [ready, setReady] = useState(false);
+  const { data: stats } = useQuery({ queryKey: qk.home, queryFn: getHomeStats });
 
   useEffect(() => {
-    setPosts(loadPosts());
+    setLocalPosts(loadPosts());
     setReady(true);
   }, []);
 
+  const posts = useMemo(
+    () => mergeCommunityFeed(localPosts, stats?.recent_songs ?? []),
+    [localPosts, stats?.recent_songs],
+  );
+
   function onToggleLike(postId: string) {
-    setPosts(toggleLike(postId));
+    if (postId.startsWith("new-song-")) return;
+    setLocalPosts(toggleLike(postId));
   }
 
   return (
@@ -62,7 +72,7 @@ export default function CommunityPage() {
         </div>
       )}
 
-      <CreatePostSheet open={composeOpen} onOpenChange={setComposeOpen} onCreated={setPosts} />
+      <CreatePostSheet open={composeOpen} onOpenChange={setComposeOpen} onCreated={setLocalPosts} />
     </>
   );
 }

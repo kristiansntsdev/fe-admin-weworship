@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { PageHeader } from "../../_components/page-header";
-import { MostAddedSongs, TrendingSongs } from "../../_components/song-rankings";
+import { MostAddedSongs, NewlyAddedSongs, TrendingSongs } from "../../_components/song-rankings";
 import { qk } from "../../_lib/api";
 import { getHomeStats } from "../../_lib/home";
 import { getMe } from "../../_lib/songs";
@@ -52,6 +52,14 @@ export default function AppHomePage() {
             <Stat value={stats?.artist_count} label="Artists" failed={isError} />
             <Stat value={12} label="Keys" />
           </div>
+        </div>
+
+        <div>
+          <div className="pb-3">
+            <p className="font-semibold text-primary text-xs uppercase tracking-wider">Library</p>
+            <h3 className="font-semibold text-lg tracking-tight">Newly added</h3>
+          </div>
+          <NewlyAddedSongs songs={stats?.recent_songs ?? []} />
         </div>
 
         <div>

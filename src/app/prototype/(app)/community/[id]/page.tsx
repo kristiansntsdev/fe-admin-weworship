@@ -31,8 +31,14 @@ export default function CommunityPostDetailPage({ params }: { params: Promise<{ 
   const [copying, setCopying] = useState(false);
 
   useEffect(() => {
+    // System new-song posts deep-link to the catalog song, not a localStorage post.
+    const match = /^new-song-(\d+)$/.exec(id);
+    if (match) {
+      router.replace(`/prototype/songs/${match[1]}`);
+      return;
+    }
     setPost(getPost(id) ?? null);
-  }, [id]);
+  }, [id, router]);
 
   function onLike() {
     const next = toggleLike(id);

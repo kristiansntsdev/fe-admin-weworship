@@ -49,6 +49,15 @@ export interface RankedSong {
   count: number;
 }
 
+/** Newest catalog songs — included on GET /home as recent_songs. */
+export interface RecentSong {
+  id: number;
+  title: string;
+  artist: string | null;
+  key: string | null;
+  createdAt: string | null;
+}
+
 // GET /home — public catalog overview + rankings from song_events.
 export interface HomeStats {
   song_count: number;
@@ -57,6 +66,7 @@ export interface HomeStats {
   weekly_share_count: number;
   popular_songs?: RankedSong[];
   most_added_songs?: RankedSong[];
+  recent_songs?: RecentSong[];
 }
 
 export type SongSort = "relevance" | "title-asc" | "title-desc" | "key-asc" | "key-desc";

@@ -3,13 +3,14 @@
 import Link from "next/link";
 
 import { formatDistanceToNowStrict } from "date-fns";
-import { Copy, Heart, ListMusic, Youtube } from "lucide-react";
+import { Copy, Heart, ListMusic, Music, Youtube } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import type { CommunityPost } from "../_lib/community";
+import { isSystemPost } from "../_lib/community";
 import { VerifiedBadge } from "./verified-badge";
 
 export function PostCard({
@@ -24,7 +25,12 @@ export function PostCard({
     return t ? formatDistanceToNowStrict(t, { addSuffix: true }) : "";
   })();
 
-  const detailHref = `/prototype/community/${post.id}`;
+  const system = isSystemPost(post);
+  const songId = post.songs[0]?.id;
+  const detailHref =
+    system && typeof songId === "number"
+      ? `/prototype/songs/${songId}`
+      : `/prototype/community/${post.id}`;
 
   return (
     <article className="space-y-3 border-b px-4 py-4">
@@ -44,9 +50,12 @@ export function PostCard({
 
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary" className="gap-1.5 font-normal">
-            <ListMusic className="size-3.5" />
-            <span className="max-w-[12rem] truncate">{post.playlistName}</span>
-            <span className="text-muted-foreground">· {post.songCount}</span>
+            {system ? <Music className="size-3.5" /> : <ListMusic className="size-3.5" />}
+            <span className="max-w-[12rem] truncate">{system ? post.songs[0]?.title ?? post.playlistName : post.playlistName}</span>
+            {!system && <span className="text-muted-foreground">· {post.songCount}</span>}
+            {system && post.songs[0]?.key && (
+              <span className="text-muted-foreground">· Key {post.songs[0].key}</span>
+            )}
           </Badge>
 
           {post.youtubePlaylistUrl && (
@@ -59,31 +68,35 @@ export function PostCard({
       </Link>
 
       <div className="flex items-center gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className={cn("gap-1.5 px-2", post.likedByMe && "text-primary")}
-          aria-pressed={post.likedByMe}
-          aria-label={post.likedByMe ? "Unlike" : "Like"}
-          onClick={(e) => {
-            e.preventDefault();
-            onToggleLike?.(post.id);
-          }}
-        >
-          <Heart className={cn("size-4", post.likedByMe && "fill-current")} />
-          <span className="tabular-nums text-xs">{post.likeCount}</span>
-        </Button>
-        <span
-          className="inline-flex items-center gap-1.5 px-2 text-muted-foreground"
-          title="Playlist copies"
-          aria-label={`${post.copyCount} playlist copies`}
-        >
-          <Copy className="size-4" />
-          <span className="tabular-nums text-xs">{post.copyCount}</span>
-        </span>
+        {!system && (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={cn("gap-1.5 px-2", post.likedByMe && "text-primary")}
+              aria-pressed={post.likedByMe}
+              aria-label={post.likedByMe ? "Unlike" : "Like"}
+              onClick={(e) => {
+                e.preventDefault();
+                onToggleLike?.(post.id);
+              }}
+            >
+              <Heart className={cn("size-4", post.likedByMe && "fill-current")} />
+              <span className="tabular-nums text-xs">{post.likeCount}</span>
+            </Button>
+            <span
+              className="inline-flex items-center gap-1.5 px-2 text-muted-foreground"
+              title="Playlist copies"
+              aria-label={`${post.copyCount} playlist copies`}
+            >
+              <Copy className="size-4" />
+              <span className="tabular-nums text-xs">{post.copyCount}</span>
+            </span>
+          </>
+        )}
         <Button type="button" variant="ghost" size="sm" className="text-muted-foreground text-xs" asChild>
-          <Link href={detailHref}>View songs</Link>
+          <Link href={detailHref}>{system ? "Open song" : "View songs"}</Link>
         </Button>
       </div>
     </article>

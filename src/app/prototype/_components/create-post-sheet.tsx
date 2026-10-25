@@ -138,6 +138,7 @@ export function CreatePostSheet({
       const songs = await snapshotSongs(choice.id, choice.songCount);
       const post: CommunityPost = {
         id: `local-${Date.now()}`,
+        kind: "playlist",
         authorName: me?.username ?? "You",
         authorHandle: me?.username ?? "you",
         authorVerified: Boolean(me?.verified),
