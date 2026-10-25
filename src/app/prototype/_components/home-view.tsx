@@ -93,8 +93,8 @@ function PrimaryActions({ signedIn, className }: { signedIn: boolean; className?
   return (
     <div className={cn("flex gap-2", className)}>
       <Button size="lg" className="flex-1 bg-white text-primary hover:bg-white/90" asChild>
-        <Link href={signedIn ? "/prototype/songs" : "/prototype/register"}>
-          {signedIn ? "Browse songs" : "Get started"}
+        <Link href="/prototype/songs">
+          Browse songs
           <ArrowRight />
         </Link>
       </Button>

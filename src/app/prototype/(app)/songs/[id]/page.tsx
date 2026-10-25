@@ -2,6 +2,8 @@
 
 import { use, useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ListPlus, Star } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +18,7 @@ import { SongDetailView } from "../../../_components/song-detail-view";
 import { toggleFavorite } from "../../../_lib/activity";
 import { errorMessage, qk } from "../../../_lib/api";
 import { keyRoot } from "../../../_lib/chordpro";
+import { prototypeLoginHref, usePrototypeSignedIn } from "../../../_lib/session";
 import { getSong } from "../../../_lib/songs";
 import type { Song } from "../../../_lib/types";
 
@@ -29,6 +32,8 @@ export default function SongDetailPage({
   const { id } = use(params);
   const { key: playlistKey, from } = use(searchParams);
   const songId = Number(id);
+  const router = useRouter();
+  const signedIn = usePrototypeSignedIn();
   const queryClient = useQueryClient();
 
   const songQuery = useQuery({ queryKey: qk.song(songId), queryFn: () => getSong(songId) });
@@ -38,6 +43,9 @@ export default function SongDetailPage({
   const [addOpen, setAddOpen] = useState(false);
   const [currentKey, setCurrentKey] = useState<string | null>(keyRoot(playlistKey));
   const backHref = from?.startsWith("/prototype") ? from : "/prototype/songs";
+  const here = `/prototype/songs/${songId}`;
+
+  const requireAuth = () => router.push(prototypeLoginHref(here));
 
   const star = useMutation({
     mutationFn: () => toggleFavorite(songId),
@@ -80,11 +88,11 @@ export default function SongDetailPage({
                 aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
                 aria-pressed={favorited}
                 disabled={star.isPending}
-                onClick={() => star.mutate()}
+                onClick={() => (signedIn ? star.mutate() : requireAuth())}
               >
                 <Star className={cn(favorited && "fill-amber-400 text-amber-400")} />
               </Button>
-              <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Button size="sm" onClick={() => (signedIn ? setAddOpen(true) : requireAuth())}>
                 <ListPlus />
                 Add
               </Button>
@@ -111,7 +119,7 @@ export default function SongDetailPage({
         />
       )}
 
-      {song && (
+      {song && signedIn && (
         <AddToPlaylistSheet
           // Remount when the key changes (only possible while closed) so the sheet starts in the key being viewed.
           key={`${song.id}-${currentKey}`}

@@ -58,13 +58,14 @@ export function proxy(req: NextRequest) {
 
   const isPrototype = pathname === "/prototype" || pathname.startsWith("/prototype/");
   const isPrototypePublic = PROTOTYPE_PUBLIC_PATHS.some((p) => pathname.startsWith(p));
-  // The home landing page is open to signed-out visitors. Kept out of PROTOTYPE_PUBLIC_PATHS: those redirect
-  // signed-in users to /prototype, which would loop here.
-  const isPrototypeHome = pathname === "/prototype";
+  // Landing + song browse/search are open to signed-out visitors. Kept out of PROTOTYPE_PUBLIC_PATHS: those
+  // redirect signed-in users away from login/register, which would bounce people off songs back to /prototype.
+  const isPrototypeGuestOk =
+    pathname === "/prototype" || pathname === "/prototype/songs" || pathname.startsWith("/prototype/songs/");
 
   // Protect prototype routes — any role may use the end-user app, but the token must be valid and unexpired
   // (the Go JWT expires long before the cookie does, so an expired token would otherwise loop on 401).
-  if (isPrototype && !isPrototypePublic && !isPrototypeHome) {
+  if (isPrototype && !isPrototypePublic && !isPrototypeGuestOk) {
     if (!prototypeToken) {
       return redirectToLogin(req, pathname, undefined, "/prototype/login");
     }

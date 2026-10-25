@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { ArrowUpDown, MessageSquarePlus, Plus, Search, SlidersHorizontal, X } from "lucide-react";
 
@@ -18,6 +19,7 @@ import { PageHeader } from "../../_components/page-header";
 import { SongFilterSheet } from "../../_components/song-filter-sheet";
 import { SongRow } from "../../_components/song-row";
 import { errorMessage } from "../../_lib/api";
+import { prototypeLoginHref, usePrototypeSignedIn } from "../../_lib/session";
 import { useSongFilters } from "../../_lib/song-filters";
 import { SONG_SORTS } from "../../_lib/songs";
 import type { Song, SongSort } from "../../_lib/types";
@@ -39,6 +41,8 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
 }
 
 export default function SongsPage() {
+  const router = useRouter();
+  const signedIn = usePrototypeSignedIn();
   const { query, sort, keys, artists, setQuery, setSort, toggleKey, toggleArtist, clearFilters } = useSongFilters();
   const search = useDebouncedValue(query, 300);
   const [addSong, setAddSong] = useState<Song | null>(null);
@@ -48,13 +52,21 @@ export default function SongsPage() {
   const { songs, total, isPending, isError, error, isPlaceholderData, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useSongSearch({ search, sort, keys, artists });
 
+  const requireAuth = (from: string) => router.push(prototypeLoginHref(from));
+
   return (
     <>
       <PageHeader
         title="Songs"
         actions={
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/prototype/requests">Requests</Link>
+            <Link
+              href={
+                signedIn ? "/prototype/requests" : prototypeLoginHref("/prototype/requests")
+              }
+            >
+              Requests
+            </Link>
           </Button>
         }
       >
@@ -151,7 +163,15 @@ export default function SongsPage() {
             )}
             {(search || !activeCount) && (
               <Button asChild>
-                <Link href={`/prototype/requests/new${search ? `?title=${encodeURIComponent(search)}` : ""}`}>
+                <Link
+                  href={
+                    signedIn
+                      ? `/prototype/requests/new${search ? `?title=${encodeURIComponent(search)}` : ""}`
+                      : prototypeLoginHref(
+                          `/prototype/requests/new${search ? `?title=${encodeURIComponent(search)}` : ""}`,
+                        )
+                  }
+                >
                   <MessageSquarePlus />
                   Request this song
                 </Link>
@@ -171,7 +191,11 @@ export default function SongsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setAddSong(song)}
+                    onClick={() =>
+                      signedIn
+                        ? setAddSong(song)
+                        : requireAuth(`/prototype/songs/${song.id}`)
+                    }
                     aria-label={`Add ${song.title} to playlist`}
                   >
                     <Plus />
@@ -192,7 +216,7 @@ export default function SongsPage() {
 
       <SongFilterSheet open={filtersOpen} onOpenChange={setFiltersOpen} total={total} />
 
-      {addSong && (
+      {addSong && signedIn && (
         <AddToPlaylistSheet key={addSong.id} song={addSong} open onOpenChange={(open) => !open && setAddSong(null)} />
       )}
     </>

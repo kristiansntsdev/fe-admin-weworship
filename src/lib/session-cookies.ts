@@ -14,3 +14,16 @@ export function sessionCookieOptions() {
     path: "/",
   };
 }
+
+/** Decodable, unexpired JWT counts as signed in (API still verifies the signature). */
+export function hasLiveSession(token: string | undefined): boolean {
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf-8")) as {
+      exp?: number;
+    };
+    return typeof payload.exp !== "number" || payload.exp * 1000 > Date.now();
+  } catch {
+    return false;
+  }
+}
