@@ -27,8 +27,10 @@ export function TrendingSongs({ songs }: { songs: RankedSong[] }) {
   }
   // -mx-4 bleeds the scroll track to the screen edge. Padding on overflow-x flex is ignored in
   // WebKit, so inset comes from first/last item margins instead of px-4 on the list.
+  // scroll-px-4 is required too: snap-start aligns the item's border box (margin excluded) to the
+  // scrollport edge, so without it the browser snaps the first card flush against the screen edge.
   return (
-    <ol className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <ol className="-mx-4 flex scroll-px-4 snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {songs.map((s, i) => (
         <li
           key={s.id}
