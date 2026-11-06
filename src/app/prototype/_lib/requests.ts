@@ -1,5 +1,5 @@
 import { protoFetch } from "./api";
-import type { LyricsType, SongRequest } from "./types";
+import type { LyricsType, SongLinkCheck, SongRequest } from "./types";
 
 export async function listRequests() {
   // Song requests nest pagination inside data: { data, total, page, limit }.
@@ -14,6 +14,12 @@ export async function createRequest(input: {
   reference_link?: string;
 }) {
   return (await protoFetch<SongRequest>("/song-requests", { method: "POST", body: JSON.stringify(input) })).data;
+}
+
+export async function checkRequestLink(url: string) {
+  return (
+    await protoFetch<SongLinkCheck>("/song-requests/check-link", { method: "POST", body: JSON.stringify({ url }) })
+  ).data;
 }
 
 export async function deleteRequest(id: number) {

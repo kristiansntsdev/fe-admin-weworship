@@ -139,6 +139,22 @@ export interface SongRequest {
   updatedAt: string;
 }
 
+// POST /song-requests/check-link — can a chord sheet be read from this reference link?
+export type SongLinkStatus = "supported" | "collection" | "unsupported" | "unreachable";
+
+export interface SongLinkCheck {
+  status: SongLinkStatus;
+  url: string;
+  source: string;
+  title?: string;
+  artist?: string;
+  key?: string;
+  lyrics_type?: LyricsType;
+  content?: string; // chord-over-lyrics text, set when status is "supported"
+  songs?: { title: string; url: string }[]; // set when status is "collection"
+  reason?: string;
+}
+
 export interface Me {
   id: number;
   username: string;

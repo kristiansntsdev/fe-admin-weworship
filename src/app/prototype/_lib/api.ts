@@ -59,6 +59,7 @@ export const qk = {
   playlist: (id: number) => ["playlist", id] as const,
   playlistPreview: (token: string) => ["playlist-preview", token] as const,
   requests: ["song-requests"] as const,
+  songLink: (url: string) => ["song-link", url] as const,
   verificationMe: ["verification-me"] as const,
   searchHistory: ["search-history"] as const,
   favorites: ["favorites"] as const,
