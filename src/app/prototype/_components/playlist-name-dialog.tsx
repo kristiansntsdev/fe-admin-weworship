@@ -14,22 +14,27 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { errorMessage } from "../_lib/api";
+import { VisibilityToggle } from "./playlist-visibility";
 
 // Shared by "New playlist" and "Rename". Mount it only while open so the field starts from initialName.
+// withVisibility adds the Private / Public picker (new playlists only); it starts at Private.
 export function PlaylistNameDialog({
   title,
   submitLabel,
   initialName = "",
+  withVisibility = false,
   onSubmit,
   onClose,
 }: {
   title: string;
   submitLabel: string;
   initialName?: string;
-  onSubmit: (name: string) => Promise<void>;
+  withVisibility?: boolean;
+  onSubmit: (name: string, isPublic: boolean) => Promise<void>;
   onClose: () => void;
 }) {
   const [name, setName] = useState(initialName);
+  const [isPublic, setIsPublic] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -41,7 +46,7 @@ export function PlaylistNameDialog({
     setPending(true);
     setError(null);
     try {
-      await onSubmit(trimmed);
+      await onSubmit(trimmed, isPublic);
       onClose();
     } catch (err) {
       setError(errorMessage(err));
@@ -66,6 +71,7 @@ export function PlaylistNameDialog({
             maxLength={100}
             aria-label="Playlist name"
           />
+          {withVisibility && <VisibilityToggle isPublic={isPublic} onChange={setIsPublic} disabled={pending} />}
           {error && <p className="text-destructive text-sm">{error}</p>}
           <DialogFooter>
             <Button type="submit" disabled={!trimmed || pending || trimmed === initialName}>

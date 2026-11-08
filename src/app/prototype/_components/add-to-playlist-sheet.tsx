@@ -25,6 +25,7 @@ import { keyRoot } from "../_lib/chordpro";
 import { addSongWithKey, canEditSongs, createPlaylist, listPlaylists } from "../_lib/playlists";
 import type { Song } from "../_lib/types";
 import { KeyPicker } from "./key-picker";
+import { VisibilityLabel, VisibilityToggle } from "./playlist-visibility";
 
 // Parent should key this by song id so the selection resets per song.
 export function AddToPlaylistSheet({
@@ -43,6 +44,7 @@ export function AddToPlaylistSheet({
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [key, setKey] = useState(defaultKey ?? keyRoot(song.base_chord) ?? "G");
   const [newName, setNewName] = useState("");
+  const [newIsPublic, setNewIsPublic] = useState(false);
 
   const playlistsQuery = useQuery({ queryKey: qk.playlists, queryFn: listPlaylists, enabled: open });
 
@@ -53,9 +55,10 @@ export function AddToPlaylistSheet({
   const selected = editable.find((p) => p.id === selectedId);
 
   const createMutation = useMutation({
-    mutationFn: (name: string) => createPlaylist(name),
+    mutationFn: ({ name, isPublic }: { name: string; isPublic: boolean }) => createPlaylist(name, isPublic),
     onSuccess: async (pl) => {
       setNewName("");
+      setNewIsPublic(false);
       setFilter("");
       await queryClient.invalidateQueries({ queryKey: qk.playlists });
       setSelectedId(pl.id);
@@ -119,7 +122,11 @@ export function AddToPlaylistSheet({
                       >
                         <span className="min-w-0 flex-1">
                           <span className="block truncate font-medium">{p.playlist_name}</span>
-                          <span className="text-muted-foreground text-xs">{p.songs?.length ?? 0} songs</span>
+                          <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                            <VisibilityLabel isPublic={p.is_public} />
+                            <span aria-hidden>·</span>
+                            {p.songs?.length ?? 0} songs
+                          </span>
                         </span>
                         {inPlaylist && <Badge variant="secondary">Added · updates key</Badge>}
                         {isSelected && <Check className="size-4 shrink-0 text-primary" />}
@@ -131,27 +138,30 @@ export function AddToPlaylistSheet({
             </ul>
 
             <form
-              className="flex gap-2"
+              className="space-y-2"
               onSubmit={(e) => {
                 e.preventDefault();
-                if (newName.trim()) createMutation.mutate(newName.trim());
+                if (newName.trim()) createMutation.mutate({ name: newName.trim(), isPublic: newIsPublic });
               }}
             >
-              <Input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="New playlist name"
-                aria-label="New playlist name"
-              />
-              <Button
-                type="submit"
-                variant="outline"
-                size="icon"
-                disabled={!newName.trim() || createMutation.isPending}
-                aria-label="Create playlist"
-              >
-                <Plus />
-              </Button>
+              <div className="flex gap-2">
+                <Input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="New playlist name"
+                  aria-label="New playlist name"
+                />
+                <Button
+                  type="submit"
+                  variant="outline"
+                  size="icon"
+                  disabled={!newName.trim() || createMutation.isPending}
+                  aria-label="Create playlist"
+                >
+                  <Plus />
+                </Button>
+              </div>
+              <VisibilityToggle isPublic={newIsPublic} onChange={setNewIsPublic} disabled={createMutation.isPending} />
             </form>
 
             <div className="space-y-1.5">

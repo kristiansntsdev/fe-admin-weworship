@@ -54,7 +54,7 @@ export default function CommunityPostDetailPage({ params }: { params: Promise<{ 
     setCopying(true);
     try {
       const name = `${post.playlistName} (copy)`;
-      const created = await createPlaylist(name);
+      const created = await createPlaylist(name, false);
       const realIds = post.songs.map((s) => s.id).filter((sid): sid is number => typeof sid === "number" && sid > 0);
       if (realIds.length > 0) {
         await addSongs(created.id, realIds);

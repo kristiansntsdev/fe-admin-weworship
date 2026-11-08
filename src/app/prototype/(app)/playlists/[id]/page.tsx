@@ -18,6 +18,7 @@ import { AddSongsSheet } from "../../../_components/add-songs-sheet";
 import { ConfirmDialog } from "../../../_components/confirm-dialog";
 import { PageHeader } from "../../../_components/page-header";
 import { PlaylistActions } from "../../../_components/playlist-actions";
+import { VisibilityIcon } from "../../../_components/playlist-visibility";
 import { ReorderList } from "../../../_components/reorder-list";
 import { errorMessage, qk } from "../../../_lib/api";
 import { getPlaylist, removeSong, reorderSongs } from "../../../_lib/playlists";
@@ -94,7 +95,17 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
   return (
     <>
       <PageHeader
-        title={playlist?.playlist_name ?? "Playlist"}
+        title={
+          playlist ? (
+            <span className="flex min-w-0 items-center gap-1.5">
+              <VisibilityIcon isPublic={playlist.is_public} className="size-4 text-muted-foreground" />
+              <span className="truncate">{playlist.playlist_name}</span>
+              <span className="sr-only">{playlist.is_public ? "(public)" : "(private)"}</span>
+            </span>
+          ) : (
+            "Playlist"
+          )
+        }
         backHref="/prototype/playlists"
         actions={
           playlist &&

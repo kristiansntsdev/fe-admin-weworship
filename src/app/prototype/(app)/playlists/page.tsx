@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "../../_components/page-header";
 import { PlaylistActions } from "../../_components/playlist-actions";
 import { PlaylistNameDialog } from "../../_components/playlist-name-dialog";
+import { VisibilityLabel } from "../../_components/playlist-visibility";
 import { errorMessage, qk } from "../../_lib/api";
 import { createPlaylist, listPlaylists } from "../../_lib/playlists";
 import type { PlaylistSummary } from "../../_lib/types";
@@ -51,8 +52,8 @@ export default function PlaylistsPage() {
   const needle = filter.trim().toLowerCase();
   const playlists = (data ?? []).filter((p) => p.playlist_name.toLowerCase().includes(needle)).sort(SORTERS[sort]);
 
-  async function create(name: string) {
-    const pl = await createPlaylist(name);
+  async function create(name: string, isPublic: boolean) {
+    const pl = await createPlaylist(name, isPublic);
     toast.success("Playlist created");
     await queryClient.invalidateQueries({ queryKey: qk.playlists });
     router.push(`/prototype/playlists/${pl.id}`);
@@ -140,7 +141,8 @@ export default function PlaylistsPage() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{p.playlist_name}</span>
                   <span className="block truncate text-muted-foreground text-sm">
-                    {p.songs?.length ?? 0} songs · {updatedLabel(p)}
+                    <VisibilityLabel isPublic={p.is_public} />
+                    {` · ${p.songs?.length ?? 0} songs · ${updatedLabel(p)}`}
                   </span>
                 </span>
                 {p.access_type !== "owner" && <Badge variant="secondary">Joined</Badge>}
@@ -155,6 +157,7 @@ export default function PlaylistsPage() {
         <PlaylistNameDialog
           title="New playlist"
           submitLabel="Create"
+          withVisibility
           onSubmit={create}
           onClose={() => setCreating(false)}
         />

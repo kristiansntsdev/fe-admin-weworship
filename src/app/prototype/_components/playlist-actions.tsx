@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { EllipsisVertical, Pencil, Share2, Trash2 } from "lucide-react";
+import { EllipsisVertical, Globe, Lock, Pencil, Share2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -16,22 +16,34 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { errorMessage, qk } from "../_lib/api";
-import { deletePlaylist, renamePlaylist } from "../_lib/playlists";
+import { deletePlaylist, renamePlaylist, setPlaylistVisibility } from "../_lib/playlists";
 import type { PlaylistSummary } from "../_lib/types";
 import { ConfirmDialog } from "./confirm-dialog";
 import { PlaylistNameDialog } from "./playlist-name-dialog";
 import { ShareSheet } from "./share-sheet";
 
-// Owner-only menu: rename, share, delete. Used on the playlist list rows and the playlist detail header.
+// Owner-only menu: rename, make public/private, share, delete. Used on the playlist list rows and the playlist detail header.
 export function PlaylistActions({
   playlist,
   onDeleted,
 }: {
-  playlist: Pick<PlaylistSummary, "id" | "playlist_name">;
+  playlist: Pick<PlaylistSummary, "id" | "playlist_name" | "is_public">;
   onDeleted?: () => void;
 }) {
   const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<"rename" | "share" | "delete" | null>(null);
+
+  const visibilityMutation = useMutation({
+    mutationFn: (isPublic: boolean) => setPlaylistVisibility(playlist.id, isPublic),
+    onSuccess: async (_, isPublic) => {
+      toast.success(isPublic ? "Playlist is now public" : "Playlist is now private");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.playlists }),
+        queryClient.invalidateQueries({ queryKey: qk.playlist(playlist.id) }),
+      ]);
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: () => deletePlaylist(playlist.id),
@@ -67,6 +79,13 @@ export function PlaylistActions({
           <DropdownMenuItem onSelect={() => setDialog("rename")}>
             <Pencil />
             Rename
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={visibilityMutation.isPending}
+            onSelect={() => visibilityMutation.mutate(!playlist.is_public)}
+          >
+            {playlist.is_public ? <Lock /> : <Globe />}
+            {playlist.is_public ? "Make private" : "Make public"}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setDialog("share")}>
             <Share2 />

@@ -96,6 +96,8 @@ export interface PlaylistSummary {
   playlist_name: string;
   user_id: number;
   songs: number[] | null;
+  /** false = private (the default for new playlists). */
+  is_public: boolean;
   createdAt: string;
   updatedAt: string;
   access_type: PlaylistAccess;

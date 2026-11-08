@@ -12,13 +12,22 @@ export async function getPlaylist(id: number) {
   return (await protoFetch<PlaylistDetail>(`/playlists/${id}`)).data;
 }
 
-export async function createPlaylist(name: string) {
-  return (await protoFetch<PlaylistSummary>("/playlists", { method: "POST", body: json({ playlist_name: name }) }))
-    .data;
+export async function createPlaylist(name: string, isPublic: boolean) {
+  return (
+    await protoFetch<PlaylistSummary>("/playlists", {
+      method: "POST",
+      body: json({ playlist_name: name, is_public: isPublic }),
+    })
+  ).data;
 }
 
 export async function renamePlaylist(id: number, name: string) {
   await protoFetch(`/playlists/${id}`, { method: "PUT", body: json({ playlist_name: name }) });
+}
+
+// Owner only.
+export async function setPlaylistVisibility(id: number, isPublic: boolean) {
+  await protoFetch(`/playlists/${id}/visibility`, { method: "PUT", body: json({ is_public: isPublic }) });
 }
 
 export async function deletePlaylist(id: number) {
