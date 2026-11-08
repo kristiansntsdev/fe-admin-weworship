@@ -25,6 +25,11 @@ export async function renamePlaylist(id: number, name: string) {
   await protoFetch(`/playlists/${id}`, { method: "PUT", body: json({ playlist_name: name }) });
 }
 
+// Saves a private copy (same songs and keys) of a playlist the user can read, e.g. someone's public playlist.
+export async function copyPlaylist(id: number) {
+  return (await protoFetch<{ id: number; playlist_name: string }>(`/playlists/${id}/copy`, { method: "POST" })).data;
+}
+
 // Owner only.
 export async function setPlaylistVisibility(id: number, isPublic: boolean) {
   await protoFetch(`/playlists/${id}/visibility`, { method: "PUT", body: json({ is_public: isPublic }) });

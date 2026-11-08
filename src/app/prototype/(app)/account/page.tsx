@@ -13,6 +13,7 @@ import { PageHeader } from "../../_components/page-header";
 import { VerifiedBadge } from "../../_components/verified-badge";
 import { errorMessage, qk } from "../../_lib/api";
 import { listPlaylists } from "../../_lib/playlists";
+import { profileHref } from "../../_lib/profiles";
 import { getMe } from "../../_lib/songs";
 
 const PLAYLIST_PREVIEW = 5;
@@ -62,6 +63,9 @@ export default function AccountPage() {
                 {me.verified && <VerifiedBadge />}
               </p>
               <p className="truncate text-muted-foreground text-sm">{me.email}</p>
+              <Link href={profileHref(me.username)} className="inline-block font-medium text-primary text-xs">
+                View public profile
+              </Link>
               {me.role !== "user" && (
                 <Badge variant="secondary" className="mt-1">
                   {me.role}

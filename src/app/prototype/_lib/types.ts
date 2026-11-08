@@ -122,7 +122,15 @@ export interface SongKeyCount {
   count: number;
 }
 
-export type PlaylistAccess = "owner" | "leader" | "co-lead" | "member";
+/** viewer = someone else's public playlist: read-only, can play and save a copy. */
+export type PlaylistAccess = "owner" | "leader" | "co-lead" | "member" | "viewer";
+
+/** Public identity of a user — never email. */
+export interface PlaylistOwner {
+  username: string;
+  display_name: string;
+  verified: boolean;
+}
 
 export interface PlaylistSummary {
   id: number;
@@ -137,11 +145,31 @@ export interface PlaylistSummary {
 }
 
 export interface PlaylistDetail extends PlaylistSummary {
+  owner?: PlaylistOwner;
   song_keys?: Record<string, string> | null;
   share_token?: string | null;
   sharable_link?: string | null;
   playlist_team_id?: number | null;
   is_shared?: number | boolean;
+}
+
+// GET /profiles?q= — people search result.
+export interface ProfileSummary extends PlaylistOwner {
+  avatar_url: string | null;
+  public_playlists: number;
+}
+
+export interface PublicPlaylist {
+  id: number;
+  playlist_name: string;
+  song_count: number;
+  updatedAt: string;
+}
+
+// GET /profiles/:username — a user's public page.
+export interface PublicProfile extends PlaylistOwner {
+  avatar_url: string | null;
+  playlists: PublicPlaylist[];
 }
 
 export interface PlaylistPreview {

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Music, Play, Plus, X } from "lucide-react";
+import { ArrowUpDown, Copy, Music, Play, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -20,12 +20,20 @@ import { PageHeader } from "../../../_components/page-header";
 import { PlaylistActions } from "../../../_components/playlist-actions";
 import { VisibilityIcon } from "../../../_components/playlist-visibility";
 import { ReorderList } from "../../../_components/reorder-list";
+import { VerifiedBadge } from "../../../_components/verified-badge";
 import { errorMessage, qk } from "../../../_lib/api";
-import { getPlaylist, removeSong, reorderSongs } from "../../../_lib/playlists";
+import { copyPlaylist, getPlaylist, removeSong, reorderSongs } from "../../../_lib/playlists";
+import { profileHref } from "../../../_lib/profiles";
 import { artistLabel, getSong } from "../../../_lib/songs";
 import type { PlaylistDetail, Song } from "../../../_lib/types";
 
-const ACCESS_LABEL = { owner: "Owner", leader: "Leader", "co-lead": "Co-lead", member: "Member" } as const;
+const ACCESS_LABEL = {
+  owner: "Owner",
+  leader: "Leader",
+  "co-lead": "Co-lead",
+  member: "Member",
+  viewer: "Public",
+} as const;
 
 export default function PlaylistDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -81,6 +89,17 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
     onError: (err) => toast.error(errorMessage(err)),
   });
 
+  // Someone else's public playlist: keep a private copy (same songs and keys) in your own playlists.
+  const copyMutation = useMutation({
+    mutationFn: () => copyPlaylist(playlistId),
+    onSuccess: async (copy) => {
+      toast.success(`Saved “${copy.playlist_name}” to your playlists`);
+      await queryClient.invalidateQueries({ queryKey: qk.playlists });
+      router.push(`/prototype/playlists/${copy.id}`);
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  });
+
   function saveOrder() {
     if (!draftOrder) return;
     // The API drops any id missing from the list — append anything added since reorder mode started.
@@ -89,6 +108,10 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
   }
 
   const isOwner = playlist?.access_type === "owner";
+  // Viewers read someone else's public playlist: no reorder, add or remove — they can play it or save a copy.
+  const isViewer = playlist?.access_type === "viewer";
+  const owner = playlist?.owner;
+  const backHref = isViewer && owner ? profileHref(owner.username) : "/prototype/playlists";
   const removeSongTitle = removeId !== null ? songsById.get(removeId)?.title : undefined;
   const playHref = `/prototype/playlists/${playlistId}/play`;
 
@@ -106,7 +129,7 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
             "Playlist"
           )
         }
-        backHref="/prototype/playlists"
+        backHref={backHref}
         actions={
           playlist &&
           isOwner && <PlaylistActions playlist={playlist} onDeleted={() => router.replace("/prototype/playlists")} />
@@ -134,10 +157,29 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
       ) : (
         <>
           <div className="flex items-center justify-between gap-2 border-b px-4 py-2">
-            <p className="text-muted-foreground text-sm">
-              {songIds.length} song{songIds.length === 1 ? "" : "s"}
-              {!isOwner && ` · ${ACCESS_LABEL[playlist.access_type]}`}
-            </p>
+            {isViewer ? (
+              <p className="flex min-w-0 items-center gap-1 text-muted-foreground text-sm">
+                <span className="shrink-0">
+                  {songIds.length} song{songIds.length === 1 ? "" : "s"} · by
+                </span>
+                {owner ? (
+                  <Link
+                    href={profileHref(owner.username)}
+                    className="flex min-w-0 items-center gap-1 font-medium text-foreground hover:underline"
+                  >
+                    <span className="truncate">@{owner.username}</span>
+                    {owner.verified && <VerifiedBadge size="sm" />}
+                  </Link>
+                ) : (
+                  <span>someone</span>
+                )}
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                {songIds.length} song{songIds.length === 1 ? "" : "s"}
+                {!isOwner && ` · ${ACCESS_LABEL[playlist.access_type]}`}
+              </p>
+            )}
             {draftOrder ? (
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={() => setDraftOrder(null)}>
@@ -162,19 +204,32 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
                     Play
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={songIds.length < 2 || reorderMutation.isPending}
-                  onClick={() => setDraftOrder(songIds)}
-                >
-                  <ArrowUpDown />
-                  Reorder
-                </Button>
-                <Button size="sm" onClick={() => setAddOpen(true)}>
-                  <Plus />
-                  Add songs
-                </Button>
+                {isViewer ? (
+                  <Button
+                    size="sm"
+                    disabled={copyMutation.isPending || copyMutation.isSuccess}
+                    onClick={() => copyMutation.mutate()}
+                  >
+                    <Copy />
+                    {copyMutation.isPending ? "Saving…" : "Save a copy"}
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={songIds.length < 2 || reorderMutation.isPending}
+                      onClick={() => setDraftOrder(songIds)}
+                    >
+                      <ArrowUpDown />
+                      Reorder
+                    </Button>
+                    <Button size="sm" onClick={() => setAddOpen(true)}>
+                      <Plus />
+                      Add songs
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -202,14 +257,20 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
                   <Music />
                 </EmptyMedia>
                 <EmptyTitle>No songs yet</EmptyTitle>
-                <EmptyDescription>Add songs from the catalog to build your set list.</EmptyDescription>
+                <EmptyDescription>
+                  {isViewer
+                    ? "This playlist doesn't have any songs yet."
+                    : "Add songs from the catalog to build your set list."}
+                </EmptyDescription>
               </EmptyHeader>
-              <EmptyContent>
-                <Button onClick={() => setAddOpen(true)}>
-                  <Plus />
-                  Add songs
-                </Button>
-              </EmptyContent>
+              {!isViewer && (
+                <EmptyContent>
+                  <Button onClick={() => setAddOpen(true)}>
+                    <Plus />
+                    Add songs
+                  </Button>
+                </EmptyContent>
+              )}
             </Empty>
           ) : (
             <ul className="divide-y">
@@ -247,21 +308,25 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
                         </Badge>
                       )}
                     </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setRemoveId(sid)}
-                      aria-label={`Remove ${song?.title ?? "song"}`}
-                    >
-                      <X />
-                    </Button>
+                    {!isViewer && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setRemoveId(sid)}
+                        aria-label={`Remove ${song?.title ?? "song"}`}
+                      >
+                        <X />
+                      </Button>
+                    )}
                   </li>
                 );
               })}
             </ul>
           )}
 
-          <AddSongsSheet playlistId={playlistId} existingIds={songIds} open={addOpen} onOpenChange={setAddOpen} />
+          {!isViewer && (
+            <AddSongsSheet playlistId={playlistId} existingIds={songIds} open={addOpen} onOpenChange={setAddOpen} />
+          )}
         </>
       )}
 

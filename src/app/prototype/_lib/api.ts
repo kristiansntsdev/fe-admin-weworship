@@ -66,5 +66,7 @@ export const qk = {
   searchHistory: ["search-history"] as const,
   favorites: ["favorites"] as const,
   mixes: ["mixes"] as const,
+  profiles: (q: string) => ["profiles", q.trim().toLowerCase()] as const,
+  profile: (username: string) => ["profile", username.toLowerCase()] as const,
   moodMix: (id: string) => ["mixes", "mood", id] as const,
 };

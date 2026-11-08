@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import Link from "next/link";
+
 import { useQuery } from "@tanstack/react-query";
-import { Newspaper, Plus } from "lucide-react";
+import { Newspaper, Plus, UserSearch } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -41,10 +43,17 @@ export default function CommunityPage() {
       <PageHeader
         title="Community"
         actions={
-          <Button size="sm" onClick={() => setComposeOpen(true)}>
-            <Plus />
-            Post
-          </Button>
+          <>
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/prototype/people" aria-label="Find people">
+                <UserSearch className="size-5" />
+              </Link>
+            </Button>
+            <Button size="sm" onClick={() => setComposeOpen(true)}>
+              <Plus />
+              Post
+            </Button>
+          </>
         }
       />
 
