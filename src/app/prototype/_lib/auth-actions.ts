@@ -9,6 +9,8 @@ import {
 } from "@/lib/session-cookies";
 import { login } from "@/server/auth-actions";
 
+import { BETA_ERRORS, betaErrorKey, checkPrototypeBeta } from "./beta-access";
+
 const API_URL = process.env.NEXT_PUBLIC_GO_URL ?? process.env.GO_DEV_URL ?? "http://localhost:3001";
 
 // Only allow returning to prototype pages — prevents open redirects through ?from=.
@@ -16,7 +18,15 @@ function safeRedirect(from: string | null | undefined): string {
   return from?.startsWith("/prototype") ? from : "/prototype";
 }
 
+// Closed beta: checked before the BE issues a token or creates an account (see beta-access.ts).
+async function betaError(email: string): Promise<{ error: string } | null> {
+  const beta = await checkPrototypeBeta(email);
+  return beta === "allowed" ? null : { error: BETA_ERRORS[betaErrorKey(beta)] };
+}
+
 export async function prototypeLogin(email: string, password: string, from?: string | null) {
+  const blocked = await betaError(email);
+  if (blocked) return blocked;
   return login(email, password, safeRedirect(from), PROTOTYPE_SESSION_COOKIE);
 }
 
@@ -26,6 +36,9 @@ export async function prototypeRegister(
   password: string,
   from?: string | null,
 ): Promise<{ error: string }> {
+  const blocked = await betaError(email);
+  if (blocked) return blocked;
+
   let res: Response;
   try {
     res = await fetch(`${API_URL}/api/auth/register`, {

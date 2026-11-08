@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
+import { betaErrorKey, checkPrototypeBeta, tokenEmail } from "@/app/prototype/_lib/beta-access";
 import {
   ADMIN_SESSION_COOKIE,
   LEGACY_SESSION_COOKIE,
@@ -33,6 +34,15 @@ export async function GET(req: NextRequest) {
   const cookieStore = await cookies();
   const postAuthRedirect = cookieStore.get(POST_AUTH_REDIRECT_COOKIE)?.value;
   const isPrototype = !!postAuthRedirect?.startsWith("/prototype");
+
+  // Closed beta: no prototype session unless sisko lists this Google email (admin dashboard + mobile unaffected).
+  if (isPrototype) {
+    const beta = await checkPrototypeBeta(tokenEmail(token));
+    if (beta !== "allowed") {
+      cookieStore.delete(POST_AUTH_REDIRECT_COOKIE);
+      return NextResponse.redirect(`${origin}/prototype/login?error=${betaErrorKey(beta)}`);
+    }
+  }
 
   cookieStore.set(
     isPrototype ? PROTOTYPE_SESSION_COOKIE : ADMIN_SESSION_COOKIE,
