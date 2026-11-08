@@ -8,6 +8,7 @@ import { ArrowRight, ListMusic, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { MixShelf } from "../../_components/mix-shelf";
 import { PageHeader } from "../../_components/page-header";
 import { MostAddedSongs, NewlyAddedSongs, TrendingSongs } from "../../_components/song-rankings";
 import { qk } from "../../_lib/api";
@@ -44,6 +45,8 @@ export default function AppHomePage() {
             </Button>
           </div>
         </div>
+
+        <MixShelf />
 
         <div>
           <p className="font-semibold text-primary text-xs uppercase tracking-wider">At a glance</p>

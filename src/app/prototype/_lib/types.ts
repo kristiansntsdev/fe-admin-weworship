@@ -69,6 +69,37 @@ export interface HomeStats {
   recent_songs?: RecentSong[];
 }
 
+/** One song in a mix: a snapshot stored with the mix, so listing a mix fetches no songs. */
+export interface MixSong {
+  id: number;
+  title: string;
+  artist: string | null;
+  key: string | null;
+}
+
+/** A personal mix (key mix-1..mix-3 or supermix) or a mood mix (key mood-<id>). */
+export interface Mix {
+  key: string;
+  title: string;
+  /** Most frequent artists, e.g. "Bethel Music, JPCC Worship". */
+  subtitle: string;
+  songs: MixSong[];
+}
+
+export interface MixMood {
+  id: string;
+  label: string;
+}
+
+// GET /mixes — personal mixes (rebuilt at most daily from the user's history) plus mood chips.
+export interface MixesResponse {
+  /** false until the user has enough history (opened, favorited, added or searched songs). */
+  personalized: boolean;
+  mixes: Mix[];
+  /** Empty when the server has no embedding service — hide the shelf. */
+  moods: MixMood[];
+}
+
 export type SongSort = "relevance" | "title-asc" | "title-desc" | "key-asc" | "key-desc";
 
 export interface SongQuery {

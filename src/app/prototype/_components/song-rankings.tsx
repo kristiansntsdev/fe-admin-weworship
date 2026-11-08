@@ -12,8 +12,8 @@ const plural = (n: number | undefined, word: string) => {
   return `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`;
 };
 
-// Decorative cover art, picked by position so neighbouring cards never share a colour.
-const COVERS = [
+// Decorative cover art, picked by position so neighbouring cards never share a colour. Also used by mix covers.
+export const COVERS = [
   "from-rose-500 to-red-900",
   "from-amber-400 to-orange-800",
   "from-fuchsia-500 to-purple-900",

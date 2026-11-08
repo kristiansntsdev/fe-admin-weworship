@@ -14,6 +14,7 @@ const ALLOWED_PREFIXES = [
   "playlists",
   "song-requests",
   "favorites",
+  "mixes",
   "verification-requests",
 ];
 

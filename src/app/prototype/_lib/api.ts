@@ -63,4 +63,6 @@ export const qk = {
   verificationMe: ["verification-me"] as const,
   searchHistory: ["search-history"] as const,
   favorites: ["favorites"] as const,
+  mixes: ["mixes"] as const,
+  moodMix: (id: string) => ["mixes", "mood", id] as const,
 };
