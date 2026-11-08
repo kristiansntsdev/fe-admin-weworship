@@ -11,10 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { Song } from "../page";
 
 const CHORD_KEYS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
 const LINK_PROVIDERS = ["Spotify", "Youtube", "Apple Music"] as const;
+// Moods are tags with these exact names; the app's mood mixes and mood filter read them.
+// Must match the labels of mixMoods in be-weworship api/services/mix_builder.go.
+const MOODS = ["Calm", "Joyful", "Prayer", "Hope", "Christmas", "Easter"];
 
 function isHtmlContent(str: string): boolean {
   return /<[a-z][\s\S]*>/i.test(str);
@@ -199,6 +203,10 @@ export function SongFormPage({ song, returnUrl }: Props) {
         .map(([provider, url]) => ({ provider: provider as LinkProvider, url }));
     } catch { return []; }
   });
+  const tagNames = (song?.tags ?? []).map((t) => t.name);
+  const [moods, setMoods] = useState<string[]>(() => tagNames.filter((n) => MOODS.includes(n)));
+  // tag_names replaces every tag on the song, so tags that aren't moods are sent back unchanged.
+  const otherTags = tagNames.filter((n) => !MOODS.includes(n));
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -246,6 +254,7 @@ export function SongFormPage({ song, returnUrl }: Props) {
       external_links: JSON.stringify(
         Object.fromEntries(links.filter((l) => l.provider.trim() && l.url.trim()).map((l) => [l.provider.trim(), l.url.trim()]))
       ),
+      tag_names: [...otherTags, ...MOODS.filter((m) => moods.includes(m))],
     };
 
     const method = song ? "PUT" : "POST";
@@ -339,6 +348,26 @@ export function SongFormPage({ song, returnUrl }: Props) {
         <Button type="button" variant="outline" size="sm" onClick={handleConvertChordPro}>
           convert chordpro
         </Button>
+      </div>
+
+      {/* Mood: shown as labels on the song, used for mood mixes and the mood filter in the app */}
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="w-36 text-muted-foreground text-sm">mood (pick 1–2)</span>
+        <ToggleGroup
+          type="multiple"
+          variant="outline"
+          size="sm"
+          spacing={2}
+          value={moods}
+          onValueChange={setMoods}
+          aria-label="Mood"
+        >
+          {MOODS.map((m) => (
+            <ToggleGroupItem key={m} value={m}>
+              {m}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
       </div>
 
       {/* Row 3: WYSIWYG + ChordPro panels */}

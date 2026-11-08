@@ -14,7 +14,7 @@ export interface Song {
   external_links: unknown;
   dmca_takedown: boolean;
   dmca_status_notes: string;
-  tags: string[];
+  tags: { id: number; name: string; description: string | null }[];
   createdAt: string;
   updatedAt: string;
 }
