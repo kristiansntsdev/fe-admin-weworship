@@ -20,6 +20,12 @@ const ALLOWED_PREFIXES = [
   "verification-requests",
 ];
 
+// Endpoints under an allowed prefix that the PWA never calls and must not expose.
+// GET /playlists/:id/members returns every member's email to any signed-in user, without checking that the caller is
+// on the team; the mobile app still uses it directly, so it is closed here rather than in the Go API.
+// Case-insensitive: Fiber routes match regardless of case.
+const BLOCKED_PATHS = [/^playlists\/[^/]+\/members(\/|$)/i];
+
 type Params = { params: Promise<{ path: string[] }> };
 
 async function proxy(req: NextRequest, { params }: Params) {
@@ -28,7 +34,11 @@ async function proxy(req: NextRequest, { params }: Params) {
 
   // Reject dot segments so a decoded "%2e%2e" can't step outside the allowlist once fetch normalises the URL.
   const hasDotSegment = path.some((s) => s === "." || s === "..");
-  if (hasDotSegment || !ALLOWED_PREFIXES.some((p) => joined === p || joined.startsWith(`${p}/`))) {
+  if (
+    hasDotSegment ||
+    !ALLOWED_PREFIXES.some((p) => joined === p || joined.startsWith(`${p}/`)) ||
+    BLOCKED_PATHS.some((re) => re.test(joined))
+  ) {
     return NextResponse.json({ code: 404, message: "Not found" }, { status: 404 });
   }
 
