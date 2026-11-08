@@ -20,9 +20,15 @@ import { cn } from "@/lib/utils";
 
 import { errorMessage, qk } from "../_lib/api";
 import { useSongFilters } from "../_lib/song-filters";
-import { getArtists, getSongKeys } from "../_lib/songs";
+import { getArtists, getMoodTags, getSongKeys } from "../_lib/songs";
 
-// Multi-select key and artist filters. Changes apply immediately; the list behind updates live.
+const chipClass = (active: boolean) =>
+  cn(
+    "inline-flex h-9 items-center gap-1.5 rounded-full border px-3 font-medium text-sm transition-colors",
+    active ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-accent",
+  );
+
+// Multi-select mood, key and artist filters. Changes apply immediately; the list behind updates live.
 export function SongFilterSheet({
   open,
   onOpenChange,
@@ -32,9 +38,10 @@ export function SongFilterSheet({
   onOpenChange: (open: boolean) => void;
   total?: number;
 }) {
-  const { keys, artists, toggleKey, toggleArtist, clearFilters } = useSongFilters();
+  const { keys, artists, moods, toggleKey, toggleArtist, toggleMood, clearFilters } = useSongFilters();
   const [artistFilter, setArtistFilter] = useState("");
 
+  const moodsQuery = useQuery({ queryKey: qk.moodTags, queryFn: getMoodTags, enabled: open, staleTime: 5 * 60_000 });
   const keysQuery = useQuery({ queryKey: qk.songKeys, queryFn: getSongKeys, enabled: open, staleTime: 5 * 60_000 });
   const artistsQuery = useQuery({ queryKey: qk.artists, queryFn: getArtists, enabled: open, staleTime: 5 * 60_000 });
 
@@ -43,7 +50,7 @@ export function SongFilterSheet({
   const allArtists = artistsQuery.data ?? [];
   const selectedArtists = allArtists.filter((a) => artists.includes(a.name));
   const otherArtists = allArtists.filter((a) => !artists.includes(a.name) && a.name.toLowerCase().includes(needle));
-  const activeCount = keys.length + artists.length;
+  const activeCount = keys.length + artists.length + moods.length;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -51,10 +58,37 @@ export function SongFilterSheet({
         <div className="mx-auto flex min-h-0 w-full max-w-md flex-col">
           <DrawerHeader className="text-left">
             <DrawerTitle>Filter songs</DrawerTitle>
-            <DrawerDescription>Pick any number of keys and artists.</DrawerDescription>
+            <DrawerDescription>Pick any number of moods, keys and artists.</DrawerDescription>
           </DrawerHeader>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4">
+            {/* Hidden until there are mood tags, so the sheet doesn't show an empty section. */}
+            {(moodsQuery.isPending || (moodsQuery.data?.length ?? 0) > 0) && (
+              <section className="space-y-2">
+                <h3 className="font-medium text-sm">Mood</h3>
+                {moodsQuery.isPending ? (
+                  <Skeleton className="h-9 w-full" />
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {(moodsQuery.data ?? []).map((t) => {
+                      const active = moods.includes(t.id);
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => toggleMood(t.id)}
+                          className={chipClass(active)}
+                        >
+                          {t.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            )}
+
             <section className="space-y-2">
               <h3 className="font-medium text-sm">Key</h3>
               {keysQuery.isPending ? (

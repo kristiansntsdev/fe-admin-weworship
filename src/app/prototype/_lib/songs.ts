@@ -1,5 +1,5 @@
 import { protoFetch } from "./api";
-import type { Artist, Me, Song, SongKeyCount, SongQuery, SongSort } from "./types";
+import type { Artist, Me, Song, SongKeyCount, SongQuery, SongSort, Tag } from "./types";
 
 export const SONGS_PAGE_SIZE = 20;
 
@@ -21,6 +21,7 @@ export function searchSongs({
   sort = "title-asc",
   keys = [],
   artists = [],
+  moods = [],
 }: SongQuery & { page: number }) {
   const q = search.trim();
   const { sortBy, sortOrder } = SONG_SORTS[sort];
@@ -33,8 +34,21 @@ export function searchSongs({
     ...(q ? [`search=${encodeURIComponent(q)}`] : []),
     ...keys.map((k) => `key=${encodeURIComponent(k)}`),
     ...artists.map((a) => `artist=${encodeURIComponent(a)}`),
+    ...(moods.length ? [`tag_ids=${moods.join(",")}`] : []),
   ].join("&");
   return protoFetch<Song[]>(`/songs?${params}`);
+}
+
+// Moods are tags described "Mood". Shown in this order (the same as the home mood chips), unknown ones last.
+const MOOD_ORDER = ["Calm", "Joyful", "Prayer", "Hope", "Christmas", "Easter"];
+
+export async function getMoodTags() {
+  const tags = (await protoFetch<Tag[]>("/tags")).data ?? [];
+  const rank = (t: Tag) => {
+    const i = MOOD_ORDER.indexOf(t.name);
+    return i < 0 ? MOOD_ORDER.length : i;
+  };
+  return tags.filter((t) => t.description === "Mood").sort((a, b) => rank(a) - rank(b));
 }
 
 export async function getSongKeys() {

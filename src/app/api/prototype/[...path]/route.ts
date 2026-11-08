@@ -15,6 +15,7 @@ const ALLOWED_PREFIXES = [
   "song-requests",
   "favorites",
   "mixes",
+  "tags",
   "verification-requests",
 ];
 

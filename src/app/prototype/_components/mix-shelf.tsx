@@ -47,7 +47,8 @@ export function MixCover({ mix, className }: { mix: Pick<Mix, "key" | "title">; 
           <span className="font-bold text-4xl tabular-nums leading-none">{second}</span>
         </>
       ) : (
-        <span className="break-words font-bold text-lg leading-tight">{first}</span>
+        // No mid-word breaks ("Christma / s"): long single-word titles just get a smaller size.
+        <span className={cn("font-bold leading-tight", first.length > 8 ? "text-base" : "text-lg")}>{first}</span>
       )}
     </div>
   );

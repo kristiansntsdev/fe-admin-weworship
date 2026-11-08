@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { useQuery } from "@tanstack/react-query";
 import { ArrowUpDown, MessageSquarePlus, Plus, Search, SlidersHorizontal, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,10 +19,10 @@ import { AddToPlaylistSheet } from "../../_components/add-to-playlist-sheet";
 import { PageHeader } from "../../_components/page-header";
 import { SongFilterSheet } from "../../_components/song-filter-sheet";
 import { SongRow } from "../../_components/song-row";
-import { errorMessage } from "../../_lib/api";
+import { errorMessage, qk } from "../../_lib/api";
 import { prototypeLoginHref, usePrototypeSignedIn } from "../../_lib/session";
 import { useSongFilters } from "../../_lib/song-filters";
-import { SONG_SORTS } from "../../_lib/songs";
+import { getMoodTags, SONG_SORTS } from "../../_lib/songs";
 import type { Song, SongSort } from "../../_lib/types";
 import { useDebouncedValue } from "../../_lib/use-debounced-value";
 import { useSongSearch } from "../../_lib/use-song-search";
@@ -43,14 +44,23 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
 export default function SongsPage() {
   const router = useRouter();
   const signedIn = usePrototypeSignedIn();
-  const { query, sort, keys, artists, setQuery, setSort, toggleKey, toggleArtist, clearFilters } = useSongFilters();
+  const { query, sort, keys, artists, moods, setQuery, setSort, toggleKey, toggleArtist, toggleMood, clearFilters } =
+    useSongFilters();
   const search = useDebouncedValue(query, 300);
   const [addSong, setAddSong] = useState<Song | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const activeCount = keys.length + artists.length;
+  const activeCount = keys.length + artists.length + moods.length;
+  // Only needed to name the active mood chips; shares the cache with the filter sheet.
+  const moodTagsQuery = useQuery({
+    queryKey: qk.moodTags,
+    queryFn: getMoodTags,
+    enabled: moods.length > 0,
+    staleTime: 5 * 60_000,
+  });
+  const moodName = (id: number) => moodTagsQuery.data?.find((t) => t.id === id)?.name ?? "Mood";
 
   const { songs, total, isPending, isError, error, isPlaceholderData, hasNextPage, fetchNextPage, isFetchingNextPage } =
-    useSongSearch({ search, sort, keys, artists });
+    useSongSearch({ search, sort, keys, artists, moods });
 
   const requireAuth = (from: string) => router.push(prototypeLoginHref(from));
 
@@ -99,6 +109,9 @@ export default function SongsPage() {
         </div>
         {activeCount > 0 && (
           <div className="-mx-4 mt-2 flex items-center gap-1.5 overflow-x-auto px-4">
+            {moods.map((id) => (
+              <FilterChip key={`mood-${id}`} label={moodName(id)} onRemove={() => toggleMood(id)} />
+            ))}
             {keys.map((k) => (
               <FilterChip key={`key-${k}`} label={`Key ${k}`} onRemove={() => toggleKey(k)} />
             ))}

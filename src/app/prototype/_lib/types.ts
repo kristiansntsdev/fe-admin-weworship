@@ -107,6 +107,8 @@ export interface SongQuery {
   sort?: SongSort;
   keys?: string[];
   artists?: string[];
+  /** Mood tag ids (tags described "Mood", e.g. Calm, Joyful). A song matches if it has any of them. */
+  moods?: number[];
 }
 
 export interface Artist {
