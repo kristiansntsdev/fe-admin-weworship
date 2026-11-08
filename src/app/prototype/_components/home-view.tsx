@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { qk } from "../_lib/api";
 import { getHomeStats } from "../_lib/home";
 import { getMe } from "../_lib/songs";
+import { MixShelf } from "./mix-shelf";
 import { MostAddedSongs, TrendingSongs } from "./song-rankings";
 import { TransposeDemo } from "./transpose-demo";
 
@@ -173,6 +174,13 @@ export function HomeView({ signedIn }: { signedIn: boolean }) {
       <div className="-mt-12 relative px-4">
         <TransposeDemo />
       </div>
+
+      {/* Signed-in only: GET /mixes needs a session, and a 401 would send a visitor to the login page. */}
+      {signedIn && (
+        <Reveal className="px-4 pt-10">
+          <MixShelf />
+        </Reveal>
+      )}
 
       <Reveal className="px-4 pt-10">
         <SectionHeading eyebrow="At a glance" title="A growing worship library" />
