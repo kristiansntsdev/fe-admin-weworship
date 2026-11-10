@@ -93,8 +93,9 @@ export function proxy(req: NextRequest) {
   if (isDashboard && adminToken) {
     const role = decodeRole(adminToken);
 
-    // Invalid token → redirect to login
-    if (!role) {
+    // Invalid or expired token → redirect to login. The Go JWT lasts 24h but the cookie 30 days; without the
+    // expiry check pages still render while every API call 401s, so lists silently come back empty.
+    if (!role || isExpired(adminToken)) {
       return redirectToLogin(req, pathname, ADMIN_SESSION_COOKIE);
     }
 
@@ -110,7 +111,7 @@ export function proxy(req: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages to dashboard
-  if (isAuth && adminToken) {
+  if (isAuth && adminToken && !isExpired(adminToken)) {
     return NextResponse.redirect(new URL("/dashboard/default", req.url));
   }
 
