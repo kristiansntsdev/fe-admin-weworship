@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 import type { Song } from "../page";
 
 const CHORD_KEYS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
@@ -180,6 +181,9 @@ export function SongFormPage({ song, returnUrl }: Props) {
     song?.artist ? String(song.artist).split(",").map((a) => a.trim()).filter(Boolean) : []
   );
   const [artistInput, setArtistInput] = useState("");
+  const [knownArtists, setKnownArtists] = useState<{ name: string; count: number }[]>([]);
+  const [artistMenuOpen, setArtistMenuOpen] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const [baseChord, setBaseChord] = useState(song?.base_chord ?? "");
   const [bpm, setBpm] = useState<string>(song?.bpm != null ? String(song.bpm) : "");
   const [chordPro, setChordPro] = useState(() => {
@@ -219,12 +223,66 @@ export function SongFormPage({ song, returnUrl }: Props) {
     }
   }, [song?.lyrics_and_chords]);
 
-  function addArtist() {
-    const name = artistInput.trim();
+  useEffect(() => {
+    // Suggestions only: any name can still be typed, so a failed fetch just means no dropdown.
+    fetch("/api/artists")
+      .then((r) => r.json())
+      .then((j: { data?: { name: string; count: number }[] }) => setKnownArtists(j.data ?? []))
+      .catch(() => setKnownArtists([]));
+  }, []);
+
+  const artistQuery = artistInput.trim().toLowerCase();
+  // Match at the start of a word: "ja" finds "Billy James Foote" but not "Hujan Berkat".
+  const escapedArtistQuery = artistQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const artistWordStart = new RegExp(`(^|[^\\p{L}\\p{N}])${escapedArtistQuery}`, "u");
+  const artistSuggestions = artistQuery
+    ? knownArtists
+        .filter(
+          (a) =>
+            /[\p{L}\p{N}]/u.test(a.name) && // skip placeholders like "-" and "."
+            artistWordStart.test(a.name.toLowerCase()) &&
+            !artists.includes(a.name),
+        )
+        // Names starting with the query first; the API already sorts alphabetically and sort is stable.
+        .sort(
+          (a, b) =>
+            Number(!a.name.toLowerCase().startsWith(artistQuery)) -
+            Number(!b.name.toLowerCase().startsWith(artistQuery)),
+        )
+        .slice(0, 8)
+    : [];
+  const showArtistMenu = artistMenuOpen && artistSuggestions.length > 0;
+
+  function addArtist(raw: string = artistInput) {
+    const typed = raw.trim();
+    // Reuse the stored spelling so "jpcc worship" doesn't become a second artist next to "JPCC Worship".
+    const name = knownArtists.find((a) => a.name.toLowerCase() === typed.toLowerCase())?.name ?? typed;
     if (name && !artists.includes(name)) {
       setArtists((prev) => [...prev, name]);
     }
     setArtistInput("");
+    setActiveSuggestion(-1);
+  }
+
+  function handleArtistKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "ArrowDown" && artistSuggestions.length > 0) {
+      e.preventDefault();
+      setArtistMenuOpen(true);
+      setActiveSuggestion((i) => (i + 1) % artistSuggestions.length);
+    } else if (e.key === "ArrowUp" && artistSuggestions.length > 0) {
+      e.preventDefault();
+      setArtistMenuOpen(true);
+      setActiveSuggestion((i) => (i <= 0 ? artistSuggestions.length - 1 : i - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      // Enter adds exactly what was typed unless a suggestion was picked with the arrow keys,
+      // so a new artist whose name is part of an existing one ("Hillsong") can still be added.
+      const picked = showArtistMenu && activeSuggestion >= 0 ? artistSuggestions[activeSuggestion] : undefined;
+      addArtist(picked?.name ?? artistInput);
+    } else if (e.key === "Escape") {
+      setArtistMenuOpen(false);
+      setActiveSuggestion(-1);
+    }
   }
 
   function removeArtist(name: string) {
@@ -293,14 +351,62 @@ export function SongFormPage({ song, returnUrl }: Props) {
         </div>
         <div className="flex flex-col gap-1.5 flex-1">
           <div className="flex gap-2">
-            <Input
-              placeholder="artist"
-              value={artistInput}
-              onChange={(e) => setArtistInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addArtist(); } }}
-              className="flex-1"
-            />
-            <Button type="button" variant="outline" size="sm" onClick={addArtist}>
+            <div className="relative flex-1">
+              <Input
+                placeholder="artist"
+                value={artistInput}
+                onChange={(e) => {
+                  setArtistInput(e.target.value);
+                  setArtistMenuOpen(true);
+                  setActiveSuggestion(-1);
+                }}
+                onKeyDown={handleArtistKeyDown}
+                onFocus={() => setArtistMenuOpen(true)}
+                onBlur={() => setArtistMenuOpen(false)}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={showArtistMenu}
+                aria-controls="artist-suggestions"
+                aria-activedescendant={
+                  showArtistMenu && activeSuggestion >= 0 ? `artist-option-${activeSuggestion}` : undefined
+                }
+                autoComplete="off"
+                className="w-full"
+              />
+              {showArtistMenu && (
+                <div
+                  id="artist-suggestions"
+                  role="listbox"
+                  className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+                >
+                  {artistSuggestions.map((a, i) => (
+                    <div
+                      key={a.name}
+                      id={`artist-option-${i}`}
+                      role="option"
+                      tabIndex={-1}
+                      aria-selected={i === activeSuggestion}
+                      // mousedown + preventDefault keeps focus in the input, so blur doesn't close the menu first
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        addArtist(a.name);
+                      }}
+                      onMouseEnter={() => setActiveSuggestion(i)}
+                      className={cn(
+                        "flex cursor-pointer items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-sm",
+                        i === activeSuggestion && "bg-accent text-accent-foreground",
+                      )}
+                    >
+                      <span className="truncate">{a.name}</span>
+                      <span className="shrink-0 text-muted-foreground text-xs">
+                        {a.count} {a.count === 1 ? "song" : "songs"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={() => addArtist()}>
               add
             </Button>
           </div>
