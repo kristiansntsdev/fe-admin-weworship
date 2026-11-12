@@ -79,7 +79,7 @@ export function PublishedPlaylistView({ playlist }: { playlist: PublishedPlaylis
       )}
 
       <footer className="mt-auto border-t p-4 text-center text-muted-foreground text-xs">
-        <Link href="/prototype" className="font-medium text-primary hover:underline">
+        <Link href="/" className="font-medium text-primary hover:underline">
           WeWorship
         </Link>
         {" · worship songs and playlists"}
