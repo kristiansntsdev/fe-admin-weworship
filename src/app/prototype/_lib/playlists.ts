@@ -1,5 +1,12 @@
 import { protoFetch } from "./api";
-import type { PlaylistDetail, PlaylistPreview, PlaylistSummary, ShareLink } from "./types";
+import type {
+  PlaylistDetail,
+  PlaylistPreview,
+  PlaylistSummary,
+  PublicViewMode,
+  PublishResult,
+  ShareLink,
+} from "./types";
 
 const json = (body: unknown) => JSON.stringify(body);
 
@@ -33,6 +40,19 @@ export async function copyPlaylist(id: number) {
 // Owner only.
 export async function setPlaylistVisibility(id: number, isPublic: boolean) {
   await protoFetch(`/playlists/${id}/visibility`, { method: "PUT", body: json({ is_public: isPublic }) });
+}
+
+// Owner only. Makes the playlist public at /p/<token>. The token is created on the first publish and kept after that,
+// so switching the mode or republishing never changes the link.
+export async function publishPlaylist(id: number, viewMode: PublicViewMode) {
+  return (
+    await protoFetch<PublishResult>(`/playlists/${id}/publish`, { method: "PUT", body: json({ view_mode: viewMode }) })
+  ).data;
+}
+
+// Back to private; the public link stops working until the playlist is published again.
+export function unpublishPlaylist(id: number) {
+  return setPlaylistVisibility(id, false);
 }
 
 export async function deletePlaylist(id: number) {
@@ -79,6 +99,10 @@ export async function joinPlaylist(token: string) {
 
 export function shareUrl(token: string) {
   return `${window.location.origin}/prototype/join/${token}`;
+}
+
+export function publicUrl(token: string) {
+  return `${window.location.origin}/p/${token}`;
 }
 
 export function canEditSongs(access: PlaylistSummary["access_type"] | undefined) {

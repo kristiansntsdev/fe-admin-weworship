@@ -144,8 +144,14 @@ export interface PlaylistSummary {
   access_type: PlaylistAccess;
 }
 
+/** What a published playlist shows to the public: lyrics only, or lyrics with chords. */
+export type PublicViewMode = "lyrics" | "lyrics_chords";
+
 export interface PlaylistDetail extends PlaylistSummary {
   owner?: PlaylistOwner;
+  /** Owner only. Set once the playlist has been published; kept when it is unpublished. */
+  public_token?: string | null;
+  public_view_mode?: PublicViewMode;
   song_keys?: Record<string, string> | null;
   share_token?: string | null;
   sharable_link?: string | null;
@@ -177,6 +183,36 @@ export interface PlaylistPreview {
   owner_name: string;
   song_count: number;
   member_count: number;
+}
+
+export interface PublishedSong {
+  id: number;
+  title: string;
+  artist: string[] | string | null;
+  /** Key chosen for this playlist. */
+  key: string | null;
+  /** Key the chords in lyrics_and_chords are written in. */
+  original_key: string | null;
+  lyrics_and_chords: string | null;
+  /** Lyrics withheld (takedown). */
+  unavailable?: boolean;
+}
+
+// GET /playlists/public/:token — readable without signing in.
+export interface PublishedPlaylist {
+  playlist_name: string;
+  owner?: PlaylistOwner;
+  view_mode: PublicViewMode;
+  song_count: number;
+  updatedAt: string;
+  songs: PublishedSong[];
+}
+
+export interface PublishResult {
+  id: number;
+  is_public: boolean;
+  public_token: string;
+  public_view_mode: PublicViewMode;
 }
 
 export interface ShareLink {
