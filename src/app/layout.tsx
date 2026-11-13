@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import { Toaster } from "@/components/ui/sonner";
 import { APP_CONFIG } from "@/config/app-config";
@@ -35,6 +36,12 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <head>
         {/* Applies theme and layout preferences on load to avoid flicker and unnecessary server rerenders. */}
         <ThemeBootScript />
+        <Script
+          defer
+          src="https://analytics.pphtgd.org/script.js"
+          data-website-id="394f7d9c-7090-4dda-8847-587858886ce9"
+          strategy="afterInteractive"
+        />
       </head>
       <body className={`${fontVars} min-h-screen antialiased`}>
         <PreferencesStoreProvider
